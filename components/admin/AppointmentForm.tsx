@@ -36,6 +36,7 @@ export default function AppointmentForm({
   const [price, setPrice] = useState(
     appointment ? (appointment.pricePence / 100).toFixed(2) : "",
   );
+  const [repeatEvery, setRepeatEvery] = useState("none");
 
   // Picking a treatment fills in its usual length and fee, but both stay
   // editable — a session that ran long shouldn't need fighting with.
@@ -148,6 +149,48 @@ export default function AppointmentForm({
             <option value="no-show">Didn&rsquo;t turn up</option>
           </select>
         </div>
+
+        {!appointment && (
+          <div style={{ marginTop: "1.15rem" }}>
+            <div className="field-row field-row-2">
+              <div className="field">
+                <label htmlFor="repeatEvery">Repeat</label>
+                <select
+                  id="repeatEvery"
+                  name="repeatEvery"
+                  value={repeatEvery}
+                  onChange={(e) => setRepeatEvery(e.target.value)}
+                >
+                  <option value="none">Just this once</option>
+                  <option value="weekly">Every week</option>
+                  <option value="fortnightly">Every fortnight</option>
+                  <option value="monthly">Every 4 weeks</option>
+                </select>
+              </div>
+
+              {repeatEvery !== "none" && (
+                <div className="field">
+                  <label htmlFor="occurrences">How many altogether?</label>
+                  <input
+                    id="occurrences"
+                    name="occurrences"
+                    type="number"
+                    min={2}
+                    max={52}
+                    defaultValue={6}
+                    required
+                  />
+                </div>
+              )}
+            </div>
+            {repeatEvery !== "none" && (
+              <p className="form-note" style={{ marginTop: "0.5rem" }}>
+                Same weekday, same time. Any week that clashes with something
+                already booked is skipped and reported back, not double-booked.
+              </p>
+            )}
+          </div>
+        )}
 
         <div className="field" style={{ marginTop: "1.15rem" }}>
           <label htmlFor="notes">Notes about the booking</label>

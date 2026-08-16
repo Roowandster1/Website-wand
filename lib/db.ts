@@ -36,6 +36,7 @@ function migrate(db: Database.Database) {
       user_id       INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       created_at    TEXT NOT NULL DEFAULT (datetime('now')),
       expires_at    TEXT NOT NULL,
+      last_active_at TEXT NOT NULL DEFAULT (datetime('now')),
       user_agent    TEXT,
       ip            TEXT
     );
@@ -141,7 +142,76 @@ function migrate(db: Database.Database) {
       created_at  TEXT NOT NULL DEFAULT (datetime('now'))
     );
     CREATE INDEX IF NOT EXISTS idx_attempts ON login_attempts(identifier, created_at);
+
+    /* First-party page views for the public site.
+       No cookies, no third party, no identifiers — just a count of which pages
+       were looked at and roughly where visitors came from. That is enough to
+       be useful and little enough to avoid needing a consent banner. */
+    CREATE TABLE IF NOT EXISTS page_views (
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      path        TEXT NOT NULL,
+      referrer    TEXT,
+      viewed_at   TEXT NOT NULL,
+      viewed_date TEXT NOT NULL,
+      is_mobile   INTEGER NOT NULL DEFAULT 0
+    );
+    CREATE INDEX IF NOT EXISTS idx_views_date ON page_views(viewed_date);
+    CREATE INDEX IF NOT EXISTS idx_views_path ON page_views(path);
+
+    /* A record of every automatic backup, so a silently failing backup is
+       visible rather than discovered during a disaster. */
+    CREATE TABLE IF NOT EXISTS backup_runs (
+      id           INTEGER PRIMARY KEY AUTOINCREMENT,
+      started_at   TEXT NOT NULL,
+      status       TEXT NOT NULL,
+      destination  TEXT,
+      filename     TEXT,
+      size_bytes   INTEGER,
+      detail       TEXT
+    );
+    CREATE INDEX IF NOT EXISTS idx_backup_runs ON backup_runs(started_at DESC);
+
+    /* Reminders that have been sent, so nobody is emailed twice about the same
+       appointment even if the job runs more than once. */
+    CREATE TABLE IF NOT EXISTS reminders_sent (
+      id              INTEGER PRIMARY KEY AUTOINCREMENT,
+      appointment_id  INTEGER NOT NULL REFERENCES appointments(id) ON DELETE CASCADE,
+      channel         TEXT NOT NULL,
+      sent_at         TEXT NOT NULL,
+      status          TEXT NOT NULL,
+      detail          TEXT
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_reminder_once
+      ON reminders_sent(appointment_id, channel);
   `);
+
+  addColumnIfMissing(db, "appointments", "series_id", "TEXT");
+  addColumnIfMissing(db, "clients", "reminders_opted_out", "INTEGER NOT NULL DEFAULT 0");
+  addColumnIfMissing(db, "sessions", "last_active_at", "TEXT");
+
+  db.exec(
+    `CREATE INDEX IF NOT EXISTS idx_appointments_series ON appointments(series_id);`,
+  );
+}
+
+/**
+ * Adds a column to an existing table if it isn't already there.
+ *
+ * SQLite has no `ADD COLUMN IF NOT EXISTS`, and these migrations run on every
+ * boot against databases that may already hold real client records — so each
+ * one has to be safe to repeat.
+ */
+function addColumnIfMissing(
+  db: Database.Database,
+  table: string,
+  column: string,
+  definition: string,
+) {
+  const columns = db.prepare(`PRAGMA table_info(${table})`).all() as Array<{
+    name: string;
+  }>;
+  if (columns.some((c) => c.name === column)) return;
+  db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
 }
 
 export function getDb(): Database.Database {

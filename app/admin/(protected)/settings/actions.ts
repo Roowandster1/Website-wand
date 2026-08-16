@@ -9,7 +9,9 @@ import {
   hashPassword,
   verifyPassword,
 } from "@/lib/auth";
+import { runNightlyBackup } from "@/lib/auto-backup";
 import { getDb } from "@/lib/db";
+import { sendTomorrowsReminders } from "@/lib/reminders";
 import {
   generateRecoveryCodes,
   generateSecret,
@@ -103,6 +105,43 @@ export async function confirmTwoFactor(
   return {
     success: "Two-factor authentication is on.",
     recoveryCodes,
+  };
+}
+
+/** Runs the nightly backup immediately — for testing it, or before a holiday. */
+export async function runBackupNow(): Promise<SettingsState> {
+  const user = await requireUser();
+  const result = await runNightlyBackup();
+
+  await logAudit("backup.exported", {
+    userId: user.id,
+    detail: `manual run: ${result.status} — ${result.detail}`,
+  });
+  revalidatePath("/admin/settings");
+
+  return result.status === "ok"
+    ? { success: `Backup saved to ${result.destinations.join(" and ")}.` }
+    : { error: result.detail };
+}
+
+/** Sends tomorrow's reminders now, rather than waiting for the evening run. */
+export async function sendRemindersNow(): Promise<SettingsState> {
+  await requireUser();
+  const result = await sendTomorrowsReminders();
+  revalidatePath("/admin/settings");
+
+  if (result.considered === 0) {
+    return { success: "Nothing booked tomorrow that needs a reminder." };
+  }
+  if (result.failed > 0) {
+    return {
+      error: `${result.sent} sent, ${result.failed} failed: ${result.detail.join("; ")}`,
+    };
+  }
+  return {
+    success: `${result.sent} reminder${result.sent === 1 ? "" : "s"} sent${
+      result.skipped ? `, ${result.skipped} skipped` : ""
+    }.`,
   };
 }
 

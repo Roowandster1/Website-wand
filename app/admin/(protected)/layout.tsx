@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import AdminNav from "@/components/admin/AdminNav";
-import { getCurrentUser, userCount } from "@/lib/auth";
+import IdleGuard from "@/components/admin/IdleGuard";
+import { getCurrentUser, IDLE_MINUTES, userCount } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -29,6 +30,7 @@ export default async function ProtectedLayout({
     <div className="admin">
       <AdminNav userName={user.name} />
       <div className="admin-main">{children}</div>
+      <IdleGuard idleMinutes={IDLE_MINUTES} />
     </div>
   );
 }

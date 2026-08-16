@@ -33,6 +33,7 @@ function readForm(formData: FormData): ClientInput {
     gpDetails: text("gpDetails"),
     consentGiven: formData.get("consentGiven") === "on",
     consentNotes: text("consentNotes"),
+    remindersOptedOut: formData.get("remindersOptedOut") === "on",
   };
 }
 

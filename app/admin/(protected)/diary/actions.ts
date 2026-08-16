@@ -4,11 +4,15 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/app/admin/actions";
 import {
+  cancelFutureInSeries,
   createAppointment,
+  createSeries,
   deleteAppointment,
   findClashes,
+  REPEAT_INTERVALS,
   updateAppointment,
   type AppointmentInput,
+  type RepeatEvery,
 } from "@/lib/appointments";
 import { logAudit } from "@/lib/audit";
 import { formatTime, inputToSql } from "@/lib/dates";
@@ -63,18 +67,60 @@ export async function saveNewAppointment(
   if ("error" in parsed) return { error: parsed.error };
 
   const { input } = parsed;
+  const allowClash = formData.get("allowClash") === "on";
 
   // Double-booking is worth blocking outright rather than warning about — it
   // is nearly always a mistake, and she is one person who can't be in two
   // places at once.
   const clashes = findClashes(input.startsAt, input.durationMins);
-  if (clashes.length > 0 && formData.get("allowClash") !== "on") {
+  if (clashes.length > 0 && !allowClash) {
     const clash = clashes[0];
     return {
       error: `That overlaps with ${clash.clientName} at ${formatTime(
         clash.startsAt,
       )}. Tick "book anyway" below if you meant to.`,
     };
+  }
+
+  const repeatEvery = String(formData.get("repeatEvery") ?? "");
+  const occurrences = Number(formData.get("occurrences") ?? 1);
+
+  if (repeatEvery && repeatEvery !== "none") {
+    if (!(repeatEvery in REPEAT_INTERVALS)) {
+      return { error: "That repeat option isn't one I recognise." };
+    }
+    if (!Number.isInteger(occurrences) || occurrences < 2 || occurrences > 52) {
+      return { error: "Choose between 2 and 52 appointments in the series." };
+    }
+
+    const result = createSeries(
+      input,
+      repeatEvery as RepeatEvery,
+      occurrences,
+      allowClash,
+    );
+
+    await logAudit("appointment.created", {
+      userId: user.id,
+      entity: "appointment_series",
+      detail: `${result.created.length} booked, ${result.skipped.length} skipped`,
+    });
+
+    revalidatePath("/admin/diary");
+    revalidatePath("/admin");
+
+    // Skipped occurrences are reported rather than silently dropped, so she
+    // knows which weeks still need sorting out.
+    const skippedNote = result.skipped.length
+      ? `&skipped=${encodeURIComponent(
+          result.skipped
+            .map((s) => `${s.startsAt.slice(0, 10)} (${s.clashesWith})`)
+            .join(", "),
+        )}`
+      : "";
+    redirect(
+      `/admin/diary?series=${result.seriesId}&booked=${result.created.length}${skippedNote}`,
+    );
   }
 
   const id = createAppointment(input);
@@ -87,6 +133,25 @@ export async function saveNewAppointment(
   revalidatePath("/admin/diary");
   revalidatePath("/admin");
   redirect(`/admin/diary/${id}`);
+}
+
+/** Cancels the rest of a repeating series from a given appointment onwards. */
+export async function cancelRestOfSeries(
+  seriesId: string,
+  fromStartsAt: string,
+) {
+  const user = await requireUser();
+  cancelFutureInSeries(seriesId, fromStartsAt);
+
+  await logAudit("appointment.updated", {
+    userId: user.id,
+    entity: "appointment_series",
+    detail: `cancelled remaining from ${fromStartsAt}`,
+  });
+
+  revalidatePath("/admin/diary");
+  revalidatePath("/admin");
+  redirect("/admin/diary");
 }
 
 export async function saveExistingAppointment(

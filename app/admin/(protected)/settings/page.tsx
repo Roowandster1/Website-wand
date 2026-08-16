@@ -3,9 +3,14 @@ import { requireUser } from "@/app/admin/actions";
 import BackupPanel from "@/components/admin/BackupPanel";
 import PasswordPanel from "@/components/admin/PasswordPanel";
 import TwoFactorPanel from "@/components/admin/TwoFactorPanel";
+import AutomationPanel from "@/components/admin/AutomationPanel";
 import { recentAudit } from "@/lib/audit";
+import { backupIsStale, recentBackupRuns } from "@/lib/auto-backup";
 import { backupSummary } from "@/lib/backup";
 import { formatDateTime } from "@/lib/dates";
+import { isEmailConfigured } from "@/lib/email";
+import { isOneDriveConfigured } from "@/lib/onedrive";
+import { recentReminders } from "@/lib/reminders";
 
 export const metadata: Metadata = { title: "Settings" };
 export const dynamic = "force-dynamic";
@@ -69,6 +74,13 @@ export default async function SettingsPage({
         </div>
 
         <div>
+          <AutomationPanel
+            runs={recentBackupRuns()}
+            stale={backupIsStale()}
+            emailConfigured={isEmailConfigured()}
+            oneDriveConfigured={isOneDriveConfigured()}
+            reminderCount={recentReminders(1000).length}
+          />
           <BackupPanel summary={summary} error={backupError} />
         </div>
       </div>

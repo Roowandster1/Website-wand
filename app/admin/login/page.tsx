@@ -10,7 +10,13 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-export default async function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ idle?: string }>;
+}) {
+  const params = await searchParams;
+
   // Nothing to sign in to until an account exists.
   if (userCount() === 0) redirect("/admin/setup");
   if (await getCurrentUser()) redirect("/admin");
@@ -22,6 +28,12 @@ export default async function LoginPage() {
         <p className="auth-sub">
           Client records are confidential. Please sign in to continue.
         </p>
+        {params.idle === "1" && (
+          <p className="form-status" style={{ marginBottom: "1.25rem" }}>
+            You were signed out after a spell of inactivity, so client records
+            weren&rsquo;t left on screen.
+          </p>
+        )}
         <LoginForm />
       </div>
     </div>

@@ -1,9 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { removeAppointment, saveExistingAppointment } from "../actions";
+import {
+  cancelRestOfSeries,
+  removeAppointment,
+  saveExistingAppointment,
+} from "../actions";
 import AppointmentForm from "@/components/admin/AppointmentForm";
-import { getAppointment } from "@/lib/appointments";
+import { getAppointment, seriesAppointments } from "@/lib/appointments";
 import { listClients } from "@/lib/clients";
 import { formatDateTime } from "@/lib/dates";
 import { formatMoney } from "@/lib/payments";
@@ -25,6 +29,13 @@ export default async function AppointmentPage({
   // Bound server-side so the id can't be swapped through form input.
   const action = saveExistingAppointment.bind(null, appointment.id);
   const deleteAction = removeAppointment.bind(null, appointment.id);
+
+  const series = appointment.seriesId
+    ? seriesAppointments(appointment.seriesId)
+    : [];
+  const cancelRest = appointment.seriesId
+    ? cancelRestOfSeries.bind(null, appointment.seriesId, appointment.startsAt)
+    : undefined;
 
   const owed = appointment.pricePence - appointment.paidPence;
 
@@ -62,6 +73,22 @@ export default async function AppointmentPage({
             </Link>
             .
           </p>
+        </div>
+      )}
+
+      {appointment.seriesId && (
+        <div className="callout">
+          <h2>Part of a repeating series</h2>
+          <p>
+            {series.length} appointments in total,{" "}
+            {series.filter((a) => a.status === "booked").length} still booked.
+            Changes below affect this one only.
+          </p>
+          <form action={cancelRest} style={{ marginTop: "0.75rem" }}>
+            <button className="btn btn-secondary btn-small" type="submit">
+              Cancel this and all later ones
+            </button>
+          </form>
         </div>
       )}
 

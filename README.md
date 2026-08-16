@@ -48,9 +48,10 @@ Go to `/admin`. The first visit asks you to create an account; after that the
 setup page seals itself and cannot be used again.
 
 - **Today** — what's booked, what's owed, income so far
-- **Diary** — week view, booking, double-booking prevention
+- **Diary** — week view, booking, recurring appointments, double-booking prevention
 - **Clients** — records, health information, treatment notes, consent, archiving
 - **Payments** — what's been paid, what's outstanding, yearly totals
+- **Insights** — which treatments earn most, who's drifted away, website visitors
 - **Settings** — two-factor authentication, password, backups, activity log
 
 ### Two things to do on day one
@@ -60,22 +61,82 @@ setup page seals itself and cannot be used again.
    records.
 2. **Take a backup**, and save the passphrase somewhere physical.
 
-### Backups
+### Repeating appointments
 
-Settings → Backup downloads everything as one encrypted file. Save it into a
-OneDrive folder and it syncs and versions itself from there.
+When booking, choose weekly, fortnightly or every four weeks and how many
+altogether. The whole series goes in on the same weekday at the same time.
+
+Any week that clashes with something already booked is **skipped and reported
+back**, never silently double-booked. Editing one appointment affects only that
+one; there's a separate button to cancel a series from a given date onwards.
+
+### Automatic nightly backup
+
+Set `BACKUP_PASSPHRASE` and a backup runs every night at 2:30am, encrypted,
+saved to disk and — if configured — uploaded to OneDrive and emailed.
+
+Every run is recorded, including failures. If no backup has succeeded in two
+days, Settings says so in a warning, because a backup that quietly stopped
+working is worse than none at all: you think you have one.
+
+If `BACKUP_PASSPHRASE` isn't set, no automatic backup is taken. It will never
+fall back to writing an unencrypted copy of client health records to disk.
+
+For OneDrive uploads, run this once and follow the instructions it prints:
+
+```bash
+npm run onedrive-setup
+```
+
+It uses Microsoft's device-code sign-in and only ever gets access to the app's
+own folder — never the rest of her OneDrive.
+
+### Appointment reminders
+
+With SMTP configured, clients get an email at 6pm the evening before.
+
+The message says **when and where, and nothing else**. No treatment name, no
+reason for the visit — an email preview on a lock screen or in a shared family
+inbox shouldn't disclose that someone is having therapy. Any client can be
+opted out on their record.
+
+### Backups you can read without this app
+
+Settings → Backup also downloads everything on demand as one encrypted file.
 
 The file is encrypted with a passphrase you choose. **If you lose that
 passphrase, nobody can open the backup — not Microsoft, not the person who
 built this.** That is the point, and it's also the risk.
 
-To read a backup without this app at all:
+To read any backup without this app at all:
 
 ```bash
 node scripts/decrypt-backup.mjs practice-backup-2026-08-16.json
 ```
 
 Plain Node.js, no dependencies. Keep a copy of that script with your backups.
+
+### Website analytics without a consent banner
+
+The Insights page shows page views, which pages get read, where visitors came
+from and how many are on a phone.
+
+There is **no Google Analytics and no third-party script**. Views are counted
+by the site's own server into the same database, with no cookies, no IP
+addresses and nothing that could identify a person or link two visits. That's
+what keeps it outside the consent rules — and it's still enough to answer "is
+anyone actually reading the treatments page?".
+
+The honest limitation: with no identifiers there's no true "unique visitors"
+figure. Views are views. Obvious bots are filtered out; Do Not Track is
+honoured.
+
+### Signed out when idle
+
+After 20 minutes without activity the session ends and client records leave the
+screen — the realistic risk isn't a hacker, it's a laptop left open in the
+treatment room. A warning appears a minute beforehand. Change it with
+`IDLE_TIMEOUT_MINUTES`.
 
 ---
 
@@ -145,17 +206,25 @@ app/
   admin/
     login/ setup/    Sign-in and first-run (no session needed)
     (protected)/     Everything requiring a session — the auth boundary
+  api/collect/       Cookieless page-view beacon
   globals.css        Public styling; colours defined at the top
 components/          Public components, plus components/admin/
 content/site.ts      ← all editable website content
+instrumentation.ts   Starts the background jobs on server boot
 lib/
   crypto.ts          AES-256-GCM field encryption
-  auth.ts            Passwords, sessions, lockout
+  auth.ts            Passwords, sessions, lockout, idle expiry
   totp.ts            Two-factor codes
   db.ts              SQLite schema and migrations
   backup.ts          Encrypted export
+  auto-backup.ts     The nightly job, retention and delivery
+  reminders.ts       Reminder emails
+  scheduler.ts       Cron registration
+  analytics.ts       Practice insights
+  pageviews.ts       Website analytics
 scripts/
   decrypt-backup.mjs Standalone backup reader
+  onedrive-setup.mjs One-off OneDrive sign-in
 ```
 
 Colours, fonts and spacing are CSS variables at the top of `app/globals.css`.

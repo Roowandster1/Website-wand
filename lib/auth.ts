@@ -17,6 +17,15 @@ export const SESSION_COOKIE = "practice_session";
 /** ~100ms per hash on typical hardware — slow enough to make guessing painful. */
 const SCRYPT_PARAMS = { N: 2 ** 16, r: 8, p: 1, maxmem: 128 * 2 ** 16 * 8 * 2 };
 const SESSION_HOURS = 12;
+
+/**
+ * How long a session survives without activity.
+ *
+ * The realistic threat to a practice like this isn't a remote attacker, it's a
+ * laptop left open in a treatment room between clients. Enforced here on the
+ * server — the countdown in the browser is a courtesy, not the control.
+ */
+export const IDLE_MINUTES = Number(process.env.IDLE_TIMEOUT_MINUTES ?? 20);
 const MAX_ATTEMPTS = 5;
 const LOCKOUT_MINUTES = 15;
 const ATTEMPT_WINDOW_MINUTES = 15;
@@ -155,8 +164,8 @@ export async function createSession(userId: number): Promise<string> {
 
   const headerList = await headers();
   db.prepare(
-    `INSERT INTO sessions (id, user_id, expires_at, user_agent, ip)
-     VALUES (?, ?, datetime('now', ?), ?, ?)`,
+    `INSERT INTO sessions (id, user_id, expires_at, last_active_at, user_agent, ip)
+     VALUES (?, ?, datetime('now', ?), datetime('now'), ?, ?)`,
   ).run(
     id,
     userId,
@@ -188,16 +197,56 @@ export const getCurrentUser = cache(async (): Promise<User | null> => {
   const sessionId = cookieStore.get(SESSION_COOKIE)?.value;
   if (!sessionId) return null;
 
-  const row = getDb()
+  const db = getDb();
+  const row = db
     .prepare(
-      `SELECT u.* FROM users u
+      `SELECT u.*, s.last_active_at FROM users u
        JOIN sessions s ON s.user_id = u.id
        WHERE s.id = ? AND s.expires_at > datetime('now')`,
     )
-    .get(sessionId) as User | undefined;
+    .get(sessionId) as (User & { last_active_at: string | null }) | undefined;
 
-  return row ?? null;
+  if (!row) return null;
+
+  // Idle expiry. Checked on read rather than by a timer, so a session that has
+  // been sitting untouched is already dead by the time anyone looks at it.
+  if (row.last_active_at) {
+    const stale = db
+      .prepare(`SELECT datetime(?, ?) < datetime('now') AS expired`)
+      .get(row.last_active_at, `+${IDLE_MINUTES} minutes`) as {
+      expired: number;
+    };
+    if (stale.expired === 1) {
+      db.prepare("DELETE FROM sessions WHERE id = ?").run(sessionId);
+      return null;
+    }
+  }
+
+  db.prepare(
+    "UPDATE sessions SET last_active_at = datetime('now') WHERE id = ?",
+  ).run(sessionId);
+
+  return row;
 });
+
+/** Seconds of inactivity left before this session dies. */
+export async function idleSecondsRemaining(): Promise<number> {
+  const cookieStore = await cookies();
+  const sessionId = cookieStore.get(SESSION_COOKIE)?.value;
+  if (!sessionId) return 0;
+
+  const row = getDb()
+    .prepare(
+      `SELECT CAST(
+         (julianday(datetime(last_active_at, ?)) - julianday('now')) * 86400 AS INTEGER
+       ) AS remaining FROM sessions WHERE id = ?`,
+    )
+    .get(`+${IDLE_MINUTES} minutes`, sessionId) as
+    | { remaining: number | null }
+    | undefined;
+
+  return Math.max(0, row?.remaining ?? 0);
+}
 
 export async function destroySession() {
   const cookieStore = await cookies();

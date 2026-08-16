@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { decrypt, encrypt } from "./crypto";
 import { addMinutes, nowSql } from "./dates";
 import { getDb } from "./db";
@@ -14,6 +15,7 @@ export type Appointment = {
   pricePence: number;
   notes: string;
   paidPence: number;
+  seriesId: string | null;
 };
 
 type AppointmentRow = {
@@ -27,11 +29,12 @@ type AppointmentRow = {
   price_pence: number;
   notes_enc: string | null;
   paid_pence: number | null;
+  series_id: string | null;
 };
 
 const SELECT = `
   SELECT a.id, a.client_id, a.treatment, a.starts_at, a.duration_mins,
-         a.status, a.price_pence, a.notes_enc,
+         a.status, a.price_pence, a.notes_enc, a.series_id,
          (c.first_name || ' ' || c.last_name) AS client_name,
          (SELECT COALESCE(SUM(p.amount_pence), 0) FROM payments p
            WHERE p.appointment_id = a.id) AS paid_pence
@@ -51,6 +54,7 @@ function hydrate(row: AppointmentRow): Appointment {
     pricePence: row.price_pence,
     notes: decrypt(row.notes_enc),
     paidPence: row.paid_pence ?? 0,
+    seriesId: row.series_id,
   };
 }
 
@@ -98,12 +102,104 @@ export type AppointmentInput = {
   notes?: string;
 };
 
-export function createAppointment(input: AppointmentInput): number {
+// --- Recurring series ------------------------------------------------------
+
+/** How often a repeat lands, in days. */
+export const REPEAT_INTERVALS = {
+  weekly: 7,
+  fortnightly: 14,
+  monthly: 28,
+} as const;
+
+export type RepeatEvery = keyof typeof REPEAT_INTERVALS;
+
+/**
+ * Works out every date in a repeating series, starting from the first.
+ *
+ * "Monthly" is 28 days rather than a calendar month on purpose: a fortnightly
+ * or four-weekly rhythm keeps the same weekday and the same time slot, which
+ * is how a treatment room actually gets booked. A calendar month would drift
+ * across weekdays and collide with everything else.
+ */
+export function seriesDates(
+  firstStartsAt: string,
+  every: RepeatEvery,
+  occurrences: number,
+): string[] {
+  const step = REPEAT_INTERVALS[every];
+  return Array.from({ length: occurrences }, (_, i) =>
+    addMinutes(firstStartsAt, i * step * 24 * 60),
+  );
+}
+
+export type SeriesResult = {
+  seriesId: string;
+  created: string[];
+  skipped: Array<{ startsAt: string; clashesWith: string }>;
+};
+
+/**
+ * Books a whole series in one go.
+ *
+ * Any occurrence that collides with something already in the diary is skipped
+ * rather than silently double-booked, and reported back so she can see which
+ * weeks need rearranging.
+ */
+export function createSeries(
+  input: AppointmentInput,
+  every: RepeatEvery,
+  occurrences: number,
+  allowClashes = false,
+): SeriesResult {
+  const seriesId = randomUUID();
+  const created: string[] = [];
+  const skipped: SeriesResult["skipped"] = [];
+
+  const insert = getDb().transaction((dates: string[]) => {
+    for (const startsAt of dates) {
+      if (!allowClashes) {
+        const clashes = findClashes(startsAt, input.durationMins);
+        if (clashes.length > 0) {
+          skipped.push({ startsAt, clashesWith: clashes[0].clientName });
+          continue;
+        }
+      }
+      createAppointment({ ...input, startsAt }, seriesId);
+      created.push(startsAt);
+    }
+  });
+
+  insert(seriesDates(input.startsAt, every, occurrences));
+  return { seriesId, created, skipped };
+}
+
+export function seriesAppointments(seriesId: string): Appointment[] {
+  const rows = getDb()
+    .prepare(`${SELECT} WHERE a.series_id = ? ORDER BY a.starts_at`)
+    .all(seriesId) as AppointmentRow[];
+  return rows.map(hydrate);
+}
+
+/** Cancels the remaining future appointments in a series, leaving the past. */
+export function cancelFutureInSeries(seriesId: string, fromStartsAt: string) {
+  getDb()
+    .prepare(
+      `UPDATE appointments SET status = 'cancelled', updated_at = datetime('now')
+       WHERE series_id = ? AND starts_at >= ? AND status = 'booked'`,
+    )
+    .run(seriesId, fromStartsAt);
+}
+
+export function createAppointment(
+  input: AppointmentInput,
+  seriesId?: string,
+): number {
   const result = getDb()
     .prepare(
       `INSERT INTO appointments
-         (client_id, treatment, starts_at, duration_mins, price_pence, status, notes_enc)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+         (client_id, treatment, starts_at, duration_mins, price_pence, status,
+          notes_enc, series_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .run(
       input.clientId,
@@ -113,6 +209,7 @@ export function createAppointment(input: AppointmentInput): number {
       input.pricePence,
       input.status ?? "booked",
       encrypt(input.notes),
+      seriesId ?? null,
     );
   return Number(result.lastInsertRowid);
 }

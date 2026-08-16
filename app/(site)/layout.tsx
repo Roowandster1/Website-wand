@@ -1,5 +1,6 @@
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
+import PageViewTracker from "@/components/PageViewTracker";
 
 /** The public marketing site: header, footer, skip link. */
 export default function SiteLayout({
@@ -15,6 +16,7 @@ export default function SiteLayout({
       <Header />
       <main id="main">{children}</main>
       <Footer />
+      <PageViewTracker />
     </>
   );
 }

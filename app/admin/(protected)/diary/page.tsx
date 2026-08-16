@@ -16,7 +16,11 @@ export const dynamic = "force-dynamic";
 export default async function DiaryPage({
   searchParams,
 }: {
-  searchParams: Promise<{ week?: string }>;
+  searchParams: Promise<{
+    week?: string;
+    booked?: string;
+    skipped?: string;
+  }>;
 }) {
   const params = await searchParams;
   const today = todaySql();
@@ -50,6 +54,23 @@ export default async function DiaryPage({
           Book an appointment
         </Link>
       </div>
+
+      {params.booked && (
+        <div className={params.skipped ? "callout callout-warn" : "callout"}>
+          <h2>
+            {params.booked} appointment{params.booked === "1" ? "" : "s"} booked
+          </h2>
+          {params.skipped ? (
+            <p>
+              These weeks were skipped because something was already in the
+              diary: {params.skipped}. Book those separately once you&rsquo;ve
+              rearranged them.
+            </p>
+          ) : (
+            <p>The whole series went in without any clashes.</p>
+          )}
+        </div>
+      )}
 
       <div className="toolbar">
         <Link

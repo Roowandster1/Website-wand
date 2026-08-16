@@ -25,6 +25,7 @@ export type ClientRow = {
   consent_given_at: string | null;
   consent_notes: string | null;
   is_archived: number;
+  reminders_opted_out: number;
   created_at: string;
   updated_at: string;
 };
@@ -47,6 +48,7 @@ export type Client = {
   consentGivenAt: string;
   consentNotes: string;
   isArchived: boolean;
+  remindersOptedOut: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -66,6 +68,7 @@ export type ClientInput = {
   gpDetails?: string;
   consentGiven?: boolean;
   consentNotes?: string;
+  remindersOptedOut?: boolean;
 };
 
 function hydrate(row: ClientRow): Client {
@@ -87,6 +90,7 @@ function hydrate(row: ClientRow): Client {
     consentGivenAt: row.consent_given_at ?? "",
     consentNotes: row.consent_notes ?? "",
     isArchived: row.is_archived === 1,
+    remindersOptedOut: row.reminders_opted_out === 1,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -164,8 +168,9 @@ export function createClient(input: ClientInput): number {
       `INSERT INTO clients (
          first_name, last_name, email, phone, date_of_birth, address,
          notes_enc, health_conditions_enc, medications_enc, allergies_enc,
-         contraindications_enc, gp_details_enc, consent_given_at, consent_notes
-       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         contraindications_enc, gp_details_enc, consent_given_at, consent_notes,
+         reminders_opted_out
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .run(
       input.firstName,
@@ -182,6 +187,7 @@ export function createClient(input: ClientInput): number {
       encrypt(input.gpDetails),
       input.consentGiven ? new Date().toISOString() : null,
       input.consentNotes || null,
+      input.remindersOptedOut ? 1 : 0,
     );
   return Number(result.lastInsertRowid);
 }
@@ -198,7 +204,7 @@ export function updateClient(id: number, input: ClientInput) {
          address = ?, notes_enc = ?, health_conditions_enc = ?,
          medications_enc = ?, allergies_enc = ?, contraindications_enc = ?,
          gp_details_enc = ?, consent_given_at = ?, consent_notes = ?,
-         updated_at = datetime('now')
+         reminders_opted_out = ?, updated_at = datetime('now')
        WHERE id = ?`,
     )
     .run(
@@ -220,6 +226,7 @@ export function updateClient(id: number, input: ClientInput) {
         ? (existing?.consent_given_at ?? new Date().toISOString())
         : null,
       input.consentNotes || null,
+      input.remindersOptedOut ? 1 : 0,
       id,
     );
 }

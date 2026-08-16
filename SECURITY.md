@@ -17,6 +17,7 @@ how, and what is *not* covered, so nobody has to guess.
 | AES-256-GCM field encryption | A stolen database file, backup, or disk image revealing health data. |
 | Passphrase-encrypted backups | Backups leaking if OneDrive is compromised. |
 | Audit log | Silent access. Every sign-in and record view is recorded. |
+| Idle timeout (20 min, server-enforced) | An unattended laptop in a treatment room. |
 | `no-store` + `noindex` on `/admin` | Records sitting in browser caches, proxies or search engines. |
 
 ## What is encrypted, and what deliberately isn't
@@ -62,6 +63,28 @@ passphrase chosen by the user. Given the file and the passphrase, the data can
 be recovered with nothing else — no server, no app, no key. `scripts/decrypt-backup.mjs`
 does this with plain Node.js and no dependencies. **Keep a copy of that script
 wherever the backups live.**
+
+## Reminder emails
+
+Reminders contain the date, the time and the location — and nothing else. No
+treatment name, no reason for the visit, no clinical detail of any kind.
+
+That's deliberate. Email arrives on lock screens and in shared family inboxes,
+and the fact that someone is having therapy is itself health data. A reminder
+that says "your Aromatherapy Massage for your back pain" discloses it to anyone
+glancing at the phone. Every client can also be opted out on their record.
+
+## Website analytics
+
+Page views are counted first-party, into the same database. Stored: the path,
+the referring hostname, the date, and whether the screen was small. Not stored:
+IP addresses, cookies, fingerprints, or anything linking two visits to the same
+person.
+
+No third-party analytics is used, which matters more than usual here — putting
+a Google tracker on a therapy website means a consent banner, visitor data
+leaving the country, and disclosing to a third party which health pages someone
+read. `/admin` paths are never tracked at all.
 
 ## What this does NOT protect against
 

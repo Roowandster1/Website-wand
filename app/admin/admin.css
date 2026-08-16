@@ -536,6 +536,81 @@ table.data .num {
   text-align: center;
 }
 
+/* --- Bar charts ------------------------------------------------------------ */
+
+.bars {
+  list-style: none;
+  padding: 0;
+  margin: 0.75rem 0 0;
+  display: grid;
+  gap: 0.3rem;
+}
+
+.bars li {
+  display: grid;
+  grid-template-columns: 4.5rem minmax(0, 1fr) 3.5rem;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.bars-label {
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bars-track {
+  display: block;
+  background: var(--cream-deep);
+  border-radius: 999px;
+  height: 0.7rem;
+  overflow: hidden;
+}
+
+.bars-fill {
+  display: block;
+  height: 100%;
+  background: var(--clay);
+  border-radius: 999px;
+}
+
+.bars-value {
+  font-size: 0.85rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Idle warning ---------------------------------------------------------- */
+
+.idle-warning {
+  position: fixed;
+  bottom: 1.25rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+  width: calc(100% - 2.5rem);
+  max-width: 30rem;
+  background: var(--ink);
+  color: var(--cream);
+  border-radius: var(--radius);
+  padding: 1.15rem 1.35rem;
+  box-shadow: 0 10px 40px rgba(58, 50, 43, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.idle-warning p {
+  margin: 0;
+  font-size: 0.94rem;
+  flex: 1;
+  min-width: 12rem;
+}
+
 .breadcrumb {
   font-size: 0.9rem;
   color: var(--ink-soft);

@@ -194,6 +194,21 @@ export default function ClientForm({
             First recorded {client.consentGivenAt.slice(0, 10)}.
           </p>
         )}
+
+        <label className="checkbox" style={{ marginTop: "1.15rem" }}>
+          <input
+            type="checkbox"
+            name="remindersOptedOut"
+            defaultChecked={client?.remindersOptedOut}
+          />
+          <span>
+            Don&rsquo;t send them appointment reminders
+            <span className="form-note" style={{ display: "block" }}>
+              Reminders go out the evening before and never mention the
+              treatment — but tick this if they&rsquo;d rather not have them.
+            </span>
+          </span>
+        </label>
       </fieldset>
 
       {state.error && (
