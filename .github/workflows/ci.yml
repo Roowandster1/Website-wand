@@ -1,0 +1,27 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # A throwaway key so the build can typecheck the encryption code. It
+      # never touches real data — the live key lives in the host's secrets.
+      - run: npm run build
+        env:
+          DATA_ENCRYPTION_KEY: ${{ secrets.CI_DUMMY_KEY || 'YmFzZTY0LWR1bW15LWtleS1mb3ItY2ktb25seS0zMmI=' }}
+          DATABASE_PATH: ./data/ci.db

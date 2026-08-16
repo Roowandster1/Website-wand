@@ -1,8 +1,13 @@
 import type { Metadata } from "next";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import { site } from "@/content/site";
 import "./globals.css";
+
+/**
+ * The root layout holds only the html/body shell. The public site's header and
+ * footer live in `(site)/layout.tsx` instead, so the admin dashboard doesn't
+ * end up wrapped in the shop-window chrome — a client record is no place for a
+ * "Book a treatment" button.
+ */
 
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
@@ -26,14 +31,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en-GB">
-      <body>
-        <a className="skip-link" href="#main">
-          Skip to content
-        </a>
-        <Header />
-        <main id="main">{children}</main>
-        <Footer />
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

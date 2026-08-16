@@ -5,3 +5,7 @@ next-env.d.ts
 *.tsbuildinfo
 .DS_Store
 .env*.local
+
+# Local secrets and the live database
+.env.local
+data/

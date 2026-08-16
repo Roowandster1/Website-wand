@@ -29,7 +29,7 @@ export default function ContactPage() {
             <ContactForm />
           </div>
 
-          <div style={{ display: "grid", gap: "1.5rem" }}>
+          <div className="stack">
             <div className="card">
               <h3>Ring or email</h3>
               <ul className="detail-list" style={{ marginTop: "0.75rem" }}>

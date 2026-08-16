@@ -1,149 +1,162 @@
-# Willow & Thyme — website
+# Willow & Thyme
 
-A small, fast website for a holistic therapy practice. Four pages: home,
-treatments, about, and contact.
+Two things in one project:
 
-It's built with Next.js and exports to plain HTML, so it can be hosted free on
-GitHub Pages, Netlify or Cloudflare Pages, and there's no server to maintain or
-database to back up.
+1. **A public website** — home, treatments, about and contact.
+2. **A private admin dashboard** at `/admin` — clients, diary, treatment notes,
+   payments and encrypted backups.
 
----
+Built with Next.js and SQLite. One app, one deploy, one file to back up.
 
-## Changing the words, prices and photos
-
-**Everything you can change lives in one file: [`content/site.ts`](content/site.ts).**
-
-Open it, edit the text between the `'quote marks'`, and save. You don't need to
-touch anything else. That file covers:
-
-| What you want to change              | Where in the file  |
-| ------------------------------------ | ------------------ |
-| Business name and tagline            | `site`             |
-| Phone, email, address, social links  | `contact`          |
-| Opening hours                        | `hours`            |
-| Treatments, prices, descriptions     | `treatments`       |
-| Client quotes                        | `testimonials`     |
-| The About page and qualifications    | `about`            |
-| The menu across the top              | `nav`              |
-
-To **add** a treatment, copy an entire `{ ... }` block, paste it below, and
-change the words. To **remove** one, delete its `{ ... }` block. The order in the
-file is the order on the page.
-
-Anything marked `‹‹ CHANGE ME ››` is placeholder text I made up so the site had
-something to show. **Replace all of those before showing this to anyone.** The
-business name, the therapist's name, the phone number, the address and the three
-testimonials are all invented.
+> **Everything in here is placeholder.** The business name, the therapist, the
+> treatments, the prices and all three testimonials are invented. Anything
+> marked `‹‹ CHANGE ME ››` in `content/site.ts` needs replacing before this is
+> shown to anyone.
 
 ---
 
-## Seeing it on your own computer
+## The website
 
-You need [Node.js](https://nodejs.org) installed (the "LTS" version is right).
-Then, in a terminal, from this folder:
+All the public content lives in one file: **[`content/site.ts`](content/site.ts)**.
+Edit the text between the `'quote marks'`, save, and the site updates.
+
+| What to change | Where |
+| --- | --- |
+| Business name, tagline | `site` |
+| Phone, email, address, socials | `contact` |
+| Opening hours | `hours` |
+| Treatments, prices, descriptions | `treatments` |
+| Client quotes | `testimonials` |
+| About page and qualifications | `about` |
+
+The treatments listed there also become the options in the booking form, so the
+diary and the website can't drift apart.
+
+### The contact form
+
+Out of the box it opens the visitor's own email app with the message written
+out — works immediately, costs nothing, but some people won't press send. For
+properly emailed enquiries, make a free form at [formspree.io](https://formspree.io)
+and paste the URL into `formEndpoint` in `content/site.ts`. It switches over on
+its own.
+
+---
+
+## The admin dashboard
+
+Go to `/admin`. The first visit asks you to create an account; after that the
+setup page seals itself and cannot be used again.
+
+- **Today** — what's booked, what's owed, income so far
+- **Diary** — week view, booking, double-booking prevention
+- **Clients** — records, health information, treatment notes, consent, archiving
+- **Payments** — what's been paid, what's outstanding, yearly totals
+- **Settings** — two-factor authentication, password, backups, activity log
+
+### Two things to do on day one
+
+1. **Turn on two-factor authentication** (Settings). It's the single biggest
+   thing standing between a phished password and a stranger reading health
+   records.
+2. **Take a backup**, and save the passphrase somewhere physical.
+
+### Backups
+
+Settings → Backup downloads everything as one encrypted file. Save it into a
+OneDrive folder and it syncs and versions itself from there.
+
+The file is encrypted with a passphrase you choose. **If you lose that
+passphrase, nobody can open the backup — not Microsoft, not the person who
+built this.** That is the point, and it's also the risk.
+
+To read a backup without this app at all:
 
 ```bash
-npm install     # once, the first time
-npm run dev     # every time you want to work on it
+node scripts/decrypt-backup.mjs practice-backup-2026-08-16.json
 ```
 
-Open http://localhost:3000. Leave it running — the page updates by itself each
-time you save a change.
+Plain Node.js, no dependencies. Keep a copy of that script with your backups.
 
-Press `Ctrl+C` in the terminal to stop it.
+---
+
+## Running it on your own computer
+
+Needs [Node.js](https://nodejs.org) 22 or newer.
+
+```bash
+npm install
+cp .env.example .env.local
+node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
+# paste that into DATA_ENCRYPTION_KEY in .env.local
+npm run dev
+```
+
+Then open <http://localhost:3000>. The database creates itself at `data/practice.db`
+on first run.
 
 ---
 
 ## Putting it online
 
-```bash
-npm run build
-```
+The admin dashboard needs a real server — it has sessions, a database and
+encryption. This is no longer a static site, so free static hosts (GitHub
+Pages, plain Netlify) will not work.
 
-This writes a finished website into the `out/` folder. Every file in there is
-plain HTML, CSS and images — you can drag that folder onto Netlify or Cloudflare
-Pages and it will work.
+**Requirements:**
 
-### Automatically, via GitHub Pages
+- A host with a **persistent disk** for the SQLite file — Fly.io, Railway,
+  Render, or any small VPS. Serverless platforms with ephemeral filesystems
+  will silently lose data.
+- **HTTPS.** Session cookies are `Secure` in production and won't be sent over
+  plain HTTP. Every serious host provides a free certificate.
+- `DATA_ENCRYPTION_KEY` set as a secret.
+- `DATABASE_PATH` pointing at the mounted volume.
 
-`.github/workflows/deploy.yml` is already set up. To turn it on:
+A `Dockerfile` is included and expects a volume at `/data`. Expect £5–10/month
+for something of this size.
 
-1. On GitHub, go to **Settings → Pages**.
-2. Under **Source**, choose **GitHub Actions**.
-
-From then on, every push to `main` rebuilds and republishes the site within a
-couple of minutes.
-
-### A proper web address
-
-Out of the box GitHub gives you an address like
-`yourname.github.io/website-wand`. To use a real one:
-
-1. Buy the domain (Namecheap, Gandi, Cloudflare — roughly £10–15 a year).
-2. On GitHub, **Settings → Pages → Custom domain**, and follow its instructions.
-3. Set `url` in `content/site.ts` to the new address, so Google and link
-   previews point at the right place.
-
-The deploy workflow handles the sub-folder difference automatically, so nothing
-breaks when you switch.
+Back up the volume as well as taking in-app exports — they protect against
+different things.
 
 ---
 
-## Making the contact form email her
+## Security and the law
 
-Right now the enquiry form opens the visitor's own email app with their message
-already filled in. That works, costs nothing, and needs no setup — but the
-visitor has to press send in their own mail app, and some people won't.
+Two documents worth reading properly, not skimming:
 
-To get enquiries emailed properly instead:
+- **[SECURITY.md](SECURITY.md)** — what's encrypted, what isn't and why, what
+  the key does, and what none of this protects against.
+- **[docs/legal-obligations.md](docs/legal-obligations.md)** — ICO
+  registration, lawful basis, retention periods, subject access requests, and
+  the 72-hour breach rule.
 
-1. Sign up free at [formspree.io](https://formspree.io) and create a form.
-2. Copy the URL it gives you (it looks like `https://formspree.io/f/abcdwxyz`).
-3. Paste it into `formEndpoint` in `content/site.ts`.
-
-The form switches over on its own — no other changes needed. The free tier
-covers 50 enquiries a month.
-
----
-
-## Adding photographs
-
-Put image files in the `public/` folder, then refer to them as `/photo.jpg`.
-
-Two things worth doing before you upload any picture: shrink it (anything wider
-than about 2000 pixels is wasted, and slows the site down), and check you have
-the right to use it. Photos of the actual room and the actual therapist beat
-stock photography every time on a site like this — people are deciding whether
-they'd feel comfortable in that room.
+The short version: this holds health data, which UK GDPR treats as special
+category data. The software handles the technical duty of care. Registration,
+a privacy notice, a written retention policy and checking the website's claims
+are all still yours to do.
 
 ---
 
-## A note on what's on the page
-
-The copy mentions being insured and DBS checked, describes qualifications, and
-makes claims about what treatments help with. Those are placeholders too.
-Check every one against what's actually true before the site goes live —
-particularly the qualifications and the "good for" tags, since claiming a
-therapeutic benefit you can't stand behind is the kind of thing that causes real
-trouble with the ASA and with insurers.
-
----
-
-## Layout of the project
+## Layout
 
 ```
-app/                 One folder per page
-  page.tsx           Home
-  treatments/        Treatments & prices
-  about/             About
-  contact/           Contact & booking form
-  layout.tsx         The shell every page sits inside
-  globals.css        All the styling, colours at the top
-components/          Header, footer, contact form
-content/site.ts      ← all the editable content
-public/              Images go here
+app/
+  (site)/            The public website
+  admin/
+    login/ setup/    Sign-in and first-run (no session needed)
+    (protected)/     Everything requiring a session — the auth boundary
+  globals.css        Public styling; colours defined at the top
+components/          Public components, plus components/admin/
+content/site.ts      ← all editable website content
+lib/
+  crypto.ts          AES-256-GCM field encryption
+  auth.ts            Passwords, sessions, lockout
+  totp.ts            Two-factor codes
+  db.ts              SQLite schema and migrations
+  backup.ts          Encrypted export
+scripts/
+  decrypt-backup.mjs Standalone backup reader
 ```
 
-Colours, fonts and spacing are all defined as variables at the top of
-`app/globals.css`. Change `--clay` there and the buttons, links and accents all
-change together.
+Colours, fonts and spacing are CSS variables at the top of `app/globals.css`.
+Change `--clay` and every button, link and accent changes together.

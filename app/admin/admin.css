@@ -1,0 +1,547 @@
+/* ---------------------------------------------------------------------------
+   Admin dashboard styling. Shares the site's warm palette so it feels like the
+   same practice, but denser — this is a working tool, not a shop window.
+   --------------------------------------------------------------------------- */
+
+.admin-root {
+  min-height: 100vh;
+  background: var(--cream);
+}
+
+/* --- Sign-in and setup screens --------------------------------------------- */
+
+.auth-screen {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 2rem 1.5rem;
+  background: linear-gradient(180deg, var(--cream-deep), var(--cream));
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 27rem;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 2.5rem;
+  box-shadow: var(--shadow);
+}
+
+.auth-card h1 {
+  font-size: 1.9rem;
+  margin-bottom: 0.35rem;
+}
+
+.auth-sub {
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+  margin-bottom: 1.75rem;
+}
+
+/* --- Shell ----------------------------------------------------------------- */
+
+.admin-nav {
+  background: var(--ink);
+  color: var(--cream);
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+
+.admin-nav-inner {
+  max-width: 78rem;
+  margin-inline: auto;
+  padding: 0.85rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.admin-brand {
+  font-family: var(--serif);
+  font-size: 1.15rem;
+  color: var(--cream);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.admin-brand:hover {
+  color: #fff;
+}
+
+.admin-nav nav {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.admin-nav nav a {
+  color: #e2d8cb;
+  text-decoration: none;
+  font-size: 0.94rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 999px;
+}
+.admin-nav nav a:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+.admin-nav nav a[aria-current="page"] {
+  background: var(--clay);
+  color: #fff;
+}
+
+.admin-user {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  font-size: 0.88rem;
+  color: #cdbfae;
+}
+
+.link-button {
+  background: none;
+  border: none;
+  color: #cdbfae;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+}
+.link-button:hover {
+  color: #fff;
+}
+
+.admin-main {
+  max-width: 78rem;
+  margin-inline: auto;
+  padding: 2rem 1.5rem 4rem;
+}
+
+/* --- Page furniture -------------------------------------------------------- */
+
+.admin-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.75rem;
+}
+
+.admin-head h1 {
+  font-size: 2rem;
+  margin: 0;
+}
+
+.admin-head p {
+  margin: 0.35rem 0 0;
+  color: var(--ink-soft);
+}
+
+.panel {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  box-shadow: var(--shadow);
+}
+
+.panel h2 {
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.panel-flush {
+  padding: 0;
+  overflow: hidden;
+}
+
+.panel-flush h2 {
+  padding: 1.25rem 1.5rem 0;
+}
+
+/* Single column by default, and `minmax(0, 1fr)` so wide tables and selects
+   shrink inside it instead of pushing the page sideways on a phone. */
+.admin-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.5rem;
+}
+
+@media (min-width: 60rem) {
+  .admin-grid-2 {
+    grid-template-columns: 1.4fr 1fr;
+  }
+  .admin-grid-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.stat {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1.25rem 1.5rem;
+}
+
+.stat-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin: 0 0 0.4rem;
+}
+
+.stat-value {
+  font-family: var(--serif);
+  font-size: 2rem;
+  line-height: 1;
+  margin: 0;
+}
+
+.stat-note {
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  margin: 0.45rem 0 0;
+}
+
+/* --- Tables ---------------------------------------------------------------- */
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+table.data {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.94rem;
+}
+
+table.data th {
+  text-align: left;
+  font-size: 0.76rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  font-weight: 600;
+  padding: 0.85rem 1.5rem;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+table.data td {
+  padding: 0.85rem 1.5rem;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+
+table.data tr:last-child td {
+  border-bottom: none;
+}
+
+table.data tbody tr:hover {
+  background: var(--cream);
+}
+
+table.data .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.empty {
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+  color: var(--ink-soft);
+}
+
+/* --- Badges ---------------------------------------------------------------- */
+
+.badge {
+  display: inline-block;
+  font-size: 0.76rem;
+  font-weight: 600;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  background: var(--cream-deep);
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+.badge-booked {
+  background: var(--sage-wash);
+  color: #4d5a45;
+}
+.badge-attended {
+  background: #e3ecf5;
+  color: #3d566e;
+}
+.badge-cancelled,
+.badge-no-show {
+  background: var(--clay-wash);
+  color: var(--clay-dark);
+}
+.badge-caution {
+  background: #fbe9c9;
+  color: #8a5d00;
+}
+.badge-owed {
+  background: var(--clay-wash);
+  color: var(--clay-dark);
+}
+
+/* --- Forms ----------------------------------------------------------------- */
+
+.field-row {
+  display: grid;
+  gap: 1.15rem;
+}
+
+@media (min-width: 40rem) {
+  .field-row-2 {
+    grid-template-columns: 1fr 1fr;
+  }
+  .field-row-3 {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+
+.form-wide {
+  max-width: none;
+}
+
+.fieldset {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  margin: 0 0 1.5rem;
+  background: var(--paper);
+}
+
+.fieldset legend {
+  font-family: var(--serif);
+  font-size: 1.2rem;
+  padding-inline: 0.5rem;
+}
+
+.fieldset-note {
+  font-size: 0.88rem;
+  color: var(--ink-soft);
+  margin: -0.4rem 0 1.25rem;
+}
+
+.checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+}
+
+.checkbox input {
+  width: auto;
+  margin-top: 0.28rem;
+}
+
+.actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 1.5rem;
+}
+
+.btn-small {
+  padding: 0.5rem 1.1rem;
+  font-size: 0.9rem;
+}
+
+.btn-danger {
+  background: transparent;
+  color: var(--clay-dark);
+  border-color: #e3c4b1;
+}
+.btn-danger:hover {
+  background: var(--clay-wash);
+  color: var(--clay-dark);
+}
+
+/* --- Clinical data emphasis ------------------------------------------------ */
+
+/* Health information gets a visible border so it is obvious on screen which
+   parts of a record are the confidential ones. */
+.clinical {
+  border-left: 3px solid var(--clay);
+  background: var(--clay-wash);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.clinical h3 {
+  font-size: 1rem;
+  font-family: var(--sans);
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.clinical p {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.note-entry {
+  border-bottom: 1px solid var(--line);
+  padding: 1.25rem 0;
+}
+.note-entry:last-child {
+  border-bottom: none;
+}
+
+.note-date {
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+  margin-bottom: 0.4rem;
+}
+
+.note-body {
+  white-space: pre-wrap;
+  margin: 0;
+}
+
+/* --- Diary ----------------------------------------------------------------- */
+
+.day-group {
+  margin-bottom: 2rem;
+}
+
+.day-heading {
+  font-family: var(--serif);
+  font-size: 1.2rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--line);
+  margin-bottom: 0;
+}
+
+.day-heading.is-today {
+  border-bottom-color: var(--clay);
+  color: var(--clay-dark);
+}
+
+.slot {
+  display: grid;
+  grid-template-columns: 5.5rem 1fr auto;
+  gap: 1rem;
+  align-items: center;
+  padding: 0.9rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+@media (max-width: 34rem) {
+  .slot {
+    grid-template-columns: 4.5rem 1fr;
+  }
+}
+
+.slot-time {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.slot-client {
+  font-weight: 600;
+}
+
+.slot-detail {
+  font-size: 0.88rem;
+  color: var(--ink-soft);
+}
+
+.toolbar {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+
+.toolbar input[type="search"],
+.toolbar input[type="date"],
+.toolbar select {
+  font: inherit;
+  padding: 0.55rem 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.toolbar input[type="search"] {
+  min-width: 15rem;
+}
+
+/* --- Misc ------------------------------------------------------------------ */
+
+.callout {
+  background: var(--sage-wash);
+  border: 1px solid #cdd8c4;
+  border-radius: var(--radius);
+  padding: 1.15rem 1.35rem;
+  margin-bottom: 1.75rem;
+}
+
+.callout-warn {
+  background: #fbe9c9;
+  border-color: #e8d09a;
+}
+
+.callout h2,
+.callout h3 {
+  font-size: 1.05rem;
+  font-family: var(--sans);
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+}
+
+.callout p:last-child {
+  margin-bottom: 0;
+}
+
+.mono {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.9rem;
+  background: var(--cream-deep);
+  padding: 0.15rem 0.4rem;
+  border-radius: 5px;
+  word-break: break-all;
+}
+
+.recovery-codes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 0.5rem;
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0;
+}
+
+.recovery-codes li {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  background: var(--cream-deep);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  text-align: center;
+}
+
+.breadcrumb {
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+  margin-bottom: 0.5rem;
+}
+
+.breadcrumb a {
+  color: var(--ink-soft);
+}
