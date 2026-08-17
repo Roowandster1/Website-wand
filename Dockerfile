@@ -58,12 +58,20 @@ COPY --from=build /app/scripts ./scripts
 
 RUN mkdir -p /data && chmod 700 /data
 
-# Railway (and most hosts) inject PORT and expect the app to bind to it.
-# 0.0.0.0 is required — binding to localhost would make the container
-# unreachable and fail every healthcheck.
+# Railway (and most hosts) inject PORT, and the server binds to it — that part
+# is wanted.
 ENV PORT=3000
-ENV HOSTNAME=0.0.0.0
 EXPOSE 3000
 
+# HOSTNAME is forced here, at start time, rather than with ENV.
+#
+# The standalone server does `process.env.HOSTNAME || '0.0.0.0'`, and container
+# runtimes set HOSTNAME to the container's own id. That value overrides anything
+# ENV puts in the image, so the server tries to resolve the container id as an
+# address and dies with "getaddrinfo ENOTFOUND" before it ever listens. The
+# platform then reports the deploy as started but every healthcheck fails, which
+# points nowhere near the real cause.
+#
+# `exec` keeps node as PID 1 so it still receives stop signals.
 # `next start` does not run a standalone build; the traced server does.
-CMD ["node", "server.js"]
+CMD ["sh", "-c", "HOSTNAME=0.0.0.0 exec node server.js"]
