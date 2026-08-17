@@ -39,7 +39,7 @@ export default function SetupForm() {
         <p className="form-note">
           At least 12 characters. Three unrelated words with a number is both
           easier to remember and harder to guess than something like
-          &ldquo;Massage2024!&rdquo;.
+          &ldquo;Counselling2026!&rdquo;.
         </p>
       </div>
 

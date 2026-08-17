@@ -100,17 +100,18 @@ export const clientGroups = [
 export const about = {
   heading: "Hello, I'm Elizabeth",
   /**
-   * A photograph of Elizabeth, if there is one.
+   * A photograph of Elizabeth.
    *
-   * Put the file in the `public` folder and write its name here, e.g.
-   * "/elizabeth.jpg". Leave it as "" and the About section simply becomes a
-   * single column of text — there is deliberately no grey placeholder box,
+   * The file lives in the `public` folder. To change it, drop a new one in there
+   * and write its name here. Set this to "" and the About sections simply become
+   * a single column of text — there is deliberately no grey placeholder box,
    * because an empty rectangle looks worse than no photograph at all.
    *
-   * A photograph makes a real difference on a counselling site: people want to
-   * see who they would be sitting with. Portrait orientation works best.
+   * The current file is 400 × 400, which is why it is shown at 192px: any bigger
+   * and it would go soft on a modern screen. A larger original (1000px or more
+   * on the long edge, portrait orientation) could be run considerably bigger.
    */
-  portrait: "",
+  portrait: "/elizabeth.jpg",
   portraitAlt: "Elizabeth Wand",
   intro:
     "I'm a fully qualified and widely experienced BACP-accredited counsellor " +

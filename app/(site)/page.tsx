@@ -110,7 +110,12 @@ export default function HomePage() {
               <p className="kicker kicker-rule">About</p>
               {about.portrait ? (
                 <figure className="portrait">
-                  <img src={about.portrait} alt={about.portraitAlt} />
+                  <img
+                    src={about.portrait}
+                    alt={about.portraitAlt}
+                    width={400}
+                    height={400}
+                  />
                 </figure>
               ) : null}
               <h2>{about.heading}</h2>

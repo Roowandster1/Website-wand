@@ -28,8 +28,13 @@ export default function AboutPage() {
         <div className="wrap with-aside">
           <div>
             {about.portrait ? (
-              <figure className="portrait" style={{ maxWidth: "22rem" }}>
-                <img src={about.portrait} alt={about.portraitAlt} />
+              <figure className="portrait">
+                <img
+                  src={about.portrait}
+                  alt={about.portraitAlt}
+                  width={400}
+                  height={400}
+                />
               </figure>
             ) : null}
 

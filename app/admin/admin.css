@@ -6,27 +6,44 @@
 /* ---------------------------------------------------------------------------
    Admin tokens.
 
-   The dashboard has its own palette rather than borrowing the website's warm
-   cream and terracotta. The public site is a shop window and wants warmth; this
-   is a clinical tool somebody sits in front of for hours, and wants calm and
-   low contrast between surfaces. Sage-grey, with one deeper teal for whatever
-   is currently selected.
+   Three colours, each with one job, so nothing has to be guessed at:
 
-   Change --sidebar to restyle the whole left column.
+     --sidebar   a deep near-black green for the left column. The first version
+                 was pale sage on white, which meant the column and the page it
+                 sat beside were almost the same brightness and the eye had to
+                 hunt for the edge. Dark against light is the single biggest
+                 contrast win available and costs nothing.
+     --alert     a brick red. It marks the page you are on and any count that
+                 needs attention — overdue tasks, new enquiries. Red because red
+                 is the one colour everybody already reads as "look here".
+     --accent    the practice green. Confirmations, primary actions, the tick on
+                 a completed task: things that have gone right.
+
+   Red for attention and green for done are the wrong way round to swap, so the
+   two never mean the same thing. Destructive buttons stay a *muted outlined*
+   red in the main column (.btn-danger, further down) rather than a filled one,
+   so "delete" can never be mistaken for "here" — and the two never appear on
+   the same surface anyway.
+
+   Change --sidebar to restyle the whole left column, --alert to change the
+   marker colour everywhere at once.
    --------------------------------------------------------------------------- */
 
 .admin-root {
-  --page:        #f7f9f8;
+  --page:        #f6f8f7;
   --panel:       #ffffff;
-  --panel-2:     #eef2f1;
-  --sidebar:     #d7e3df;
-  --sidebar-2:   #c6d6d1;
-  --sidebar-ink: #24332f;
-  --ink:         #1e2a28;
-  --ink-soft:    #5c6b67;
-  --line:        #dde5e2;
+  --panel-2:     #eceff0;
+  --sidebar:     #1e2b28;
+  --sidebar-2:   #2e403b;
+  --sidebar-ink: #eaf0ed;
+  --ink:         #1a2422;
+  --ink-soft:    #56635f;
+  --line:        #dbe3e0;
   --accent:      #12736b;
   --accent-soft: #dceae7;
+  --alert:       #bf4130;
+  --alert-soft:  #f6e7e2;
+  --alert-ink:   #8c2e20;
 
   min-height: 100vh;
   background: var(--page);
@@ -38,7 +55,7 @@
     --page:        #101514;
     --panel:       #18201e;
     --panel-2:     #202a28;
-    --sidebar:     #1b2523;
+    --sidebar:     #141d1b;
     --sidebar-2:   #26332f;
     --sidebar-ink: #dfe9e6;
     --ink:         #e4ecea;
@@ -46,6 +63,9 @@
     --line:        #29352f;
     --accent:      #55bdb2;
     --accent-soft: #14322f;
+    --alert:       #d6543f;
+    --alert-soft:  #3a1d17;
+    --alert-ink:   #f0a996;
   }
 }
 
@@ -56,7 +76,10 @@
   display: grid;
   place-items: center;
   padding: 2rem 1.5rem;
-  background: linear-gradient(180deg, var(--sidebar), var(--page));
+  /* --panel-2 rather than --sidebar: the sidebar is nearly black now, and a
+     sign-in page that starts black at the top and fades to white looks broken
+     rather than designed. */
+  background: linear-gradient(180deg, var(--panel-2), var(--page));
 }
 
 .auth-card {
@@ -129,14 +152,47 @@
   font-weight: 620;
   letter-spacing: -.01em;
   padding-inline: .35rem;
+  /* Pushes the drawer's close button to the right-hand edge. */
+  justify-content: space-between;
+}
+
+.sidebar-brand-name {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  min-width: 0;
 }
 
 .sidebar-brand-mark {
   width: 1.6rem;
   height: 1.6rem;
   border-radius: 7px;
-  background: var(--accent);
+  background: var(--alert);
   flex: 0 0 auto;
+}
+
+/* The drawer's own close control. The floating Menu button used to stay put and
+   sit on top of the word "Practice" once the drawer slid out from under it —
+   that overlap is what this replaces. One control, always where the thing it
+   closes actually is. */
+.sidebar-close {
+  background: none;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  font-size: 1.35rem;
+  line-height: 1;
+  padding: .35rem .5rem;
+  margin-right: -.25rem;
+  cursor: pointer;
+  border-radius: 8px;
+  opacity: .75;
+}
+
+.sidebar-close:hover { background: var(--sidebar-2); opacity: 1; }
+
+@media (min-width: 60rem) {
+  .sidebar-close { display: none; }
 }
 
 .sidebar-nav {
@@ -154,7 +210,9 @@
   font-weight: 700;
   letter-spacing: .13em;
   text-transform: uppercase;
-  opacity: .55;
+  /* .55 was legible on the old pale column; on the dark one it needs a little
+     more to stay comfortably readable. */
+  opacity: .65;
   margin: 0 0 .35rem .6rem;
 }
 
@@ -170,10 +228,26 @@
   font-size: .95rem;
 }
 
-.sidebar-link:hover { background: var(--sidebar-2); color: inherit; }
+.sidebar-link:hover { background: var(--sidebar-2); }
 
+/* These three exist to beat `.admin-root a`, further down the file, which paints
+   every link the accent green. That rule is written for the main column, where
+   the ground is white — in the sidebar it came out teal-on-dark at 2.6:1, and
+   its :hover came out near-black-on-dark, which is most of why the old column
+   was hard to read. Three class selectors so specificity lands on our side. */
+.admin-root .sidebar .sidebar-link,
+.admin-root .sidebar .sidebar-link:hover {
+  color: var(--sidebar-ink);
+}
+
+.admin-root .sidebar .sidebar-link[aria-current="page"] {
+  color: #fff;
+}
+
+/* Where you are, in red. On the dark column this is unmissable from across a
+   desk — which was the whole complaint about the old pale-on-pale version. */
 .sidebar-link[aria-current="page"] {
-  background: var(--accent);
+  background: var(--alert);
   color: #fff;
   font-weight: 600;
 }
@@ -192,15 +266,20 @@
 
 .sidebar-soon { border: 1px solid currentColor; opacity: .8; }
 
+/* A count that needs attention. Pale on the dark column so it reads as a
+   number rather than competing with the red marker beside it. */
 .sidebar-badge {
-  background: #b4451f;
-  color: #fff;
+  background: var(--alert-soft);
+  color: var(--alert-ink);
   font-variant-numeric: tabular-nums;
   letter-spacing: 0;
 }
 
+/* On the red marker itself the pale pill would disappear into it, so it goes
+   solid white instead. */
 .sidebar-link[aria-current="page"] .sidebar-badge {
-  background: rgba(255, 255, 255, .25);
+  background: #fff;
+  color: var(--alert-ink);
 }
 
 /* --- Who is signed in, pinned to the bottom -------------------------------- */
@@ -274,13 +353,18 @@
   z-index: 45;
   background: var(--sidebar);
   color: var(--sidebar-ink);
-  border: 1px solid var(--sidebar-2);
+  border: 1px solid var(--sidebar);
   border-radius: 9px;
-  padding: .45rem .8rem;
+  padding: .5rem .85rem;
   font: inherit;
   font-size: .9rem;
   cursor: pointer;
 }
+
+/* Hidden while the drawer is out. It used to stay on top of the drawer's own
+   heading, which is the overlap this fixes; the drawer carries its own close
+   button instead. */
+.sidebar-toggle[aria-expanded="true"] { display: none; }
 
 @media (min-width: 60rem) { .sidebar-toggle { display: none; } }
 

@@ -61,6 +61,17 @@ export default function Footer() {
             © {new Date().getFullYear()} {site.name}
           </p>
           <p>Registered member of the BACP · Accredited</p>
+          {/* How Elizabeth gets into her own dashboard. Kept in the footer,
+              which is where every professional site puts a staff login: quiet
+              enough that clients don't wonder what it is, and always in the
+              same place so she never has to remember a web address.
+              rel=nofollow because there is nothing here for a search engine —
+              robots.txt already blocks /admin either way. */}
+          <p>
+            <Link href="/admin" rel="nofollow">
+              Practice login
+            </Link>
+          </p>
         </div>
       </div>
     </footer>

@@ -779,15 +779,21 @@ img {
 
 /* --- Portrait --------------------------------------------------------------
    Only rendered when a real photograph has been supplied. There is deliberately
-   no placeholder: an empty grey rectangle is worse than a text-only section. */
+   no placeholder: an empty grey rectangle is worse than a text-only section.
+
+   Capped at 12rem because the photograph on file is 400px square — at 12rem it
+   is exactly 2× the displayed size, so it stays sharp on a phone or a retina
+   laptop. Shown any larger it would visibly soften. Set a bigger cap here if a
+   higher-resolution original is supplied. Square rather than a circle: a round
+   crop is an app convention, and this is a page. */
 
 .site-root .portrait {
   margin: 0 0 1.75rem;
+  max-width: 12rem;
 }
 
 .site-root .portrait img {
   width: 100%;
-  filter: saturate(0.92);
 }
 
 .site-root .portrait figcaption {
@@ -1528,6 +1534,19 @@ img {
 
 .site-root .footer-bottom p {
   margin: 0;
+}
+
+/* The practice login. Marked enough to be findable, quiet enough not to invite
+   a client to try it. */
+.site-root .footer-bottom a {
+  color: var(--clay-dark);
+  text-decoration: none;
+  border-bottom: 1px solid var(--line-strong);
+  padding-bottom: 0.1rem;
+}
+
+.site-root .footer-bottom a:hover {
+  border-bottom-color: var(--clay);
 }
 
 /* --- Enquiry form on the public site --------------------------------------- */
