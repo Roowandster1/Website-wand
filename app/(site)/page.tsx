@@ -5,227 +5,334 @@ import {
   availability,
   clientGroups,
   contact,
+  faqs,
   fees,
+  howCounsellingWorks,
   neurodivergence,
   qualifications,
   sessionTypes,
+  site,
   supervision,
-  therapies,
 } from "@/content/site";
 
+/**
+ * The home page reads top to bottom like a printed page: hero, what she works
+ * with, who she is, how the work goes, the practical details, availability,
+ * questions, and how to reach her.
+ *
+ * Each section is composed differently on purpose — a reading column, then an
+ * index in columns, then a portrait beside text, then numbered steps, then a
+ * table of facts. Nothing is wrapped in a card, and no two neighbouring
+ * sections share a shape, so scrolling feels like turning pages rather than
+ * flicking through tiles.
+ */
 export default function HomePage() {
   return (
     <>
-      <section className="hero">
-        <div className="wrap hero-grid">
-          <div>
-            <p className="eyebrow">
-              Counselling · {contact.locations.join(" & ")} · Online
-            </p>
-            <h1>Somewhere to be heard, without judgement</h1>
-            <p className="lede">{about.intro}</p>
-            <div className="btn-row">
-              <Link className="btn btn-primary" href="/contact">
-                Get in touch
-              </Link>
-              <Link className="btn btn-secondary" href="/how-i-work">
-                How I work
-              </Link>
-            </div>
-            <p className="hero-note">
-              An initial call costs nothing and commits you to nothing. It
-              simply gives us both a chance to see whether working together
-              feels right.
-            </p>
-          </div>
+      {/* ---------------------------------------------------------------- 2
+          Hero. One headline on a controlled measure, her own opening line, the
+          two ways to reach her — and the three facts people look for first in a
+          narrow column beside it on a laptop, stacked underneath on a phone. */}
+      <section className="wrap hero hero-grid">
+        <div>
+          <p className="kicker">{site.tagline}</p>
+          <h1 className="display">Somewhere to be heard, without judgement</h1>
+          <p className="lede">{about.intro}</p>
 
-          <div className="hero-panel">
-            <h2>Ring or text me</h2>
-            <a className="hero-phone" href={`tel:${contact.phoneLink}`}>
+          <div className="actions">
+            <a className="tel" href={`tel:${contact.phoneLink}`}>
               {contact.phone}
             </a>
-            <p style={{ color: "var(--ink-soft)", fontSize: "0.95rem" }}>
-              {contact.acceptsText
-                ? "Calls and texts both welcome."
-                : "Calls welcome."}
-            </p>
-            <ul className="detail-list stacked" style={{ marginTop: "1.25rem" }}>
-              {sessionTypes.map((type) => (
-                <li key={type.label} style={{ padding: "0.55rem 0" }}>
-                  <span>{type.label}</span>
-                  <span className="muted">{type.detail}</span>
-                </li>
-              ))}
-            </ul>
+            <Link className="cta-link" href="/contact">
+              Arrange an initial call
+            </Link>
           </div>
         </div>
-      </section>
 
-      {/* Said plainly and said early. Someone who has worked up the courage to
-          write a first message deserves to know about the wait before they
-          write it, not a fortnight afterwards. */}
-      {!availability.open && (
-        <section className="section" style={{ paddingBottom: 0 }}>
-          <div className="wrap">
-            <div className="notice">
-              <h2>Availability</h2>
-              <p>{availability.waitingListMessage}</p>
-            </div>
-          </div>
-        </section>
-      )}
-
-      <section className="section">
-        <div className="wrap split">
-          <div className="prose">
-            <p className="eyebrow">How I can help</p>
-            {about.paragraphs.slice(0, 3).map((paragraph, index) => (
-              <p
-                key={index}
-                style={index === 0 ? { fontSize: "1.15rem" } : undefined}
-              >
-                {paragraph}
-              </p>
-            ))}
+        <ul className="hero-facts">
+          <li>
+            <p className="hero-facts-label">Sessions</p>
             <p>
-              <Link href="/about">More about me and my training &rarr;</Link>
+              {fees.amount} · {fees.duration}
             </p>
-          </div>
+          </li>
+          <li>
+            <p className="hero-facts-label">Where</p>
+            <p>{contact.locations.join(", ")}, online or by phone</p>
+          </li>
+          <li>
+            <p className="hero-facts-label">Availability</p>
+            <p>
+              {availability.open
+                ? "Taking on new clients"
+                : "Waiting list for new clients"}
+            </p>
+          </li>
+        </ul>
+      </section>
 
-          <div className="stack">
-            <div className="card">
-              <h3>Sessions</h3>
-              <div className="fee" style={{ marginTop: "1rem" }}>
-                <strong>{fees.amount}</strong>
-                <span>per {fees.per}</span>
+      {/* ---------------------------------------------------------------- 3
+          A short introduction, then the index of what people bring. Set as a
+          printed index rather than chips: someone in distress is scanning for
+          one word, and a word is not a button. */}
+      <section className="band band-rule">
+        <div className="wrap">
+          {/* Full page width rather than the label-and-column layout used
+              elsewhere: an index needs room, and sixty words squeezed into a
+              two-thirds column wrap two to a line. */}
+          <p className="kicker kicker-rule">What people bring</p>
+          <h2>Things I work with</h2>
+          <p className="lede" style={{ marginBottom: "2.25rem" }}>
+            You don&rsquo;t need to find your feeling on this list, or be able
+            to name it at all, before getting in touch.
+          </p>
+          <div className="index">
+            {areasOfCounselling.map((group) => (
+              <div className="index-group" key={group.group}>
+                <h3>{group.group}</h3>
+                {/* Non-breaking space before each separator, so a line never
+                    begins or ends with a stray dot. */}
+                <p className="index-words">{group.items.join(" · ")}</p>
               </div>
-              <p>{fees.note}</p>
-              <p style={{ fontSize: "0.92rem", color: "var(--ink-soft)" }}>
-                I also work with {fees.insurers.join(", ")}.
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ---------------------------------------------------------------- 4
+          About Elizabeth. Tinted ground, a pull quote opening it, her own
+          paragraphs on a reading measure, and a portrait beside them once
+          there is a photograph to use. */}
+      <section className="band band-tint">
+        <div className="wrap">
+          <div className="editorial editorial-wide">
+            <div className="editorial-label">
+              <p className="kicker kicker-rule">About</p>
+              {about.portrait ? (
+                <figure className="portrait">
+                  <img src={about.portrait} alt={about.portraitAlt} />
+                </figure>
+              ) : null}
+              <h2>{about.heading}</h2>
+              <p className="fine" style={{ margin: 0 }}>
+                {site.credentials}
               </p>
             </div>
 
-            <div className="card">
-              <h3>Who I work with</h3>
-              <ul className="tick-list" style={{ marginTop: "0.85rem" }}>
-                {clientGroups.map((group) => (
-                  <li key={group}>{group}</li>
+            <div>
+              <p className="pull" style={{ marginBottom: "1.75rem" }}>
+                {about.paragraphs[1]}
+              </p>
+              <div className="prose">
+                {[
+                  about.paragraphs[0],
+                  about.paragraphs[2],
+                  about.paragraphs[3],
+                ].map((paragraph, index) => (
+                  <p key={index}>{paragraph}</p>
                 ))}
-              </ul>
-            </div>
-
-            <div className="card">
-              <h3>When</h3>
-              <p style={{ marginTop: "0.85rem" }}>{availability.hours}</p>
+              </div>
+              <div className="actions">
+                <Link className="cta-link" href="/about">
+                  More about my training and experience
+                </Link>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Her deepest area of experience, and the thing people most often search
-          for by name. It gets a section of its own rather than one word inside a
-          list of sixty. */}
-      <section className="section section-tinted">
-        <div className="wrap split">
-          <div>
-            <p className="eyebrow">A particular interest</p>
-            <h2>{neurodivergence.heading}</h2>
-            <div className="prose">
-              {neurodivergence.paragraphs.map((paragraph, index) => (
-                <p key={index}>{paragraph}</p>
-              ))}
-            </div>
+      {/* ---------------------------------------------------------------- 4b
+          Her deepest area of experience, and the thing people most often search
+          for by name. Deliberately the quietest shape on the page: one column,
+          no label in the margin, with the honest boundary set as a note. */}
+      <section className="band">
+        <div className="wrap">
+          <p className="kicker kicker-rule">A particular interest</p>
+          <h2>{neurodivergence.heading}</h2>
+          <div className="prose-wide" style={{ marginBottom: "2rem" }}>
+            {neurodivergence.paragraphs.map((paragraph, index) => (
+              <p key={index}>{paragraph}</p>
+            ))}
           </div>
-
-          <div className="notice">
-            <h3>Worth saying plainly</h3>
+          <div className="note">
+            <p className="kicker">Worth saying plainly</p>
             <p>{neurodivergence.boundary}</p>
           </div>
         </div>
       </section>
 
-      <section className="section">
+      {/* ---------------------------------------------------------------- 5
+          How counselling works. Numbered, because it is a sequence — the
+          numerals and the rules are the structure. */}
+      <section className="band band-tint">
         <div className="wrap">
-          <p className="eyebrow">What people bring</p>
-          <h2>Things I work with</h2>
+          <div className="editorial editorial-wide">
+            <div className="editorial-label">
+              <p className="kicker kicker-rule">How it works</p>
+              <h2>From first call to ending</h2>
+            </div>
+            <ol className="steps">
+              {howCounsellingWorks.map((step) => (
+                <li key={step.heading}>
+                  <h3>{step.heading}</h3>
+                  <div>
+                    {step.paragraphs.map((paragraph, index) => (
+                      <p
+                        key={index}
+                        style={index > 0 ? { marginTop: "0.7rem" } : undefined}
+                      >
+                        {paragraph}
+                      </p>
+                    ))}
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </div>
+      </section>
+
+      {/* ---------------------------------------------------------------- 6
+          Practical information. A table of facts on hairlines — the shape this
+          content actually wants, rather than six cards pretending to be
+          features. */}
+      <section className="band">
+        <div className="wrap">
+          {/* Heading above, table across the full width — a different shape
+              again from the section before and the one after it. */}
+          <p className="kicker kicker-rule">Practical</p>
+          <h2 style={{ marginBottom: "1.75rem" }}>
+            Fees, times and ways to meet
+          </h2>
+
+          <dl className="facts">
+            <div>
+              <dt>Fee</dt>
+              <dd>
+                <span className="fee-figure">
+                  {fees.amount} <span>per {fees.per}</span>
+                </span>
+                <p className="fine">{fees.note}</p>
+              </dd>
+            </div>
+
+            <div>
+              <dt>Ways to meet</dt>
+              <dd>
+                <ul className="aside-list">
+                  {sessionTypes.map((type) => (
+                    <li key={type.label}>
+                      <strong>{type.label}</strong>
+                      {type.detail}
+                    </li>
+                  ))}
+                </ul>
+              </dd>
+            </div>
+
+            <div>
+              <dt>Times</dt>
+              <dd>{availability.hours}</dd>
+            </div>
+
+            <div>
+              <dt>Health insurance</dt>
+              <dd>{fees.insurers.join(" · ")}</dd>
+            </div>
+
+            <div>
+              <dt>Who I work with</dt>
+              <dd>{clientGroups.join(" · ")}</dd>
+            </div>
+
+            <div>
+              <dt>Supervision</dt>
+              <dd>
+                {supervision.body}
+                <p className="fine" style={{ marginBottom: 0 }}>
+                  <Link href="/contact">Enquire about supervision</Link>
+                </p>
+              </dd>
+            </div>
+          </dl>
+        </div>
+      </section>
+
+      {/* ---------------------------------------------------------------- 7
+          Current availability. Its own quiet band: someone who has worked up
+          the courage to write deserves to know about the wait first. */}
+      <section className="band band-tight band-tint">
+        <div className="wrap">
+          <div className="editorial">
+            <p className="kicker editorial-label" style={{ marginBottom: 0 }}>
+              Current availability
+            </p>
+            <div className="prose-wide">
+              <p style={{ marginBottom: 0 }}>
+                {availability.open
+                  ? `I am taking on new clients. ${availability.hours}`
+                  : availability.waitingListMessage}
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ---------------------------------------------------------------- 8
+          Questions people ask before a first appointment. Native details
+          elements on hairlines. */}
+      <section className="band">
+        <div className="wrap">
+          <div className="editorial editorial-wide">
+            <div className="editorial-label">
+              <p className="kicker kicker-rule">Questions</p>
+              <h2>Before you get in touch</h2>
+            </div>
+            <div className="faq">
+              {faqs.map((item) => (
+                <details key={item.question}>
+                  <summary>{item.question}</summary>
+                  <div className="faq-answer">
+                    {item.answer.map((paragraph, index) => (
+                      <p key={index}>{paragraph}</p>
+                    ))}
+                  </div>
+                </details>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ---------------------------------------------------------------- 9
+          The closing contact section. The one saturated block on the page, and
+          the place the whole page has been walking towards. */}
+      <section className="band band-deep">
+        <div className="wrap">
+          <p className="kicker kicker-rule">Getting in touch</p>
+          <h2 style={{ maxWidth: "24ch" }}>
+            A sentence is plenty to start with
+          </h2>
           <p className="lede">
-            You don&rsquo;t need to find your feeling on this list, or be able
-            to name it at all, before getting in touch.
+            Getting in touch is often the hardest part. You don&rsquo;t need to
+            explain everything, and there is no obligation either way.
           </p>
 
-          <div className="areas">
-            {areasOfCounselling.map((group) => (
-              <div className="area-group" key={group.group}>
-                <h3>{group.group}</h3>
-                {/* The non-breaking space keeps each separator attached to the
-                    word before it, so a line never begins or ends with a dot. */}
-                <p className="word-list">{group.items.join(" · ")}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="section section-tinted">
-        <div className="wrap">
-          <p className="eyebrow">How I work</p>
-          <h2>The approaches I draw on</h2>
-          <div className="grid grid-pairs">
-            {therapies.map((therapy) => (
-              <article className="card" key={therapy.name}>
-                <h3>{therapy.name}</h3>
-                <p>{therapy.detail}</p>
-              </article>
-            ))}
-          </div>
-          <div className="btn-row">
-            <Link className="btn btn-secondary" href="/how-i-work">
-              What sessions are actually like
+          <div className="actions">
+            <a className="tel" href={`tel:${contact.phoneLink}`}>
+              {contact.phone}
+            </a>
+            <Link className="btn btn-primary" href="/contact">
+              Send a message
             </Link>
           </div>
-        </div>
-      </section>
 
-      {/* One quiet line, not a whole section's worth of air around it. */}
-      <section className="section" style={{ paddingBlock: "2.5rem" }}>
-        <div className="wrap wrap-narrow" style={{ textAlign: "center" }}>
-          <ul className="assurances">
+          <ul className="assurances" style={{ marginTop: "2.5rem" }}>
             {qualifications.assurances.map((item) => (
               <li key={item}>{item}</li>
             ))}
           </ul>
-        </div>
-      </section>
-
-      {/* For counsellors rather than clients — kept short and kept last, so it
-          never gets in the way of someone looking for therapy. */}
-      <section className="section section-tinted">
-        <div className="wrap wrap-narrow">
-          <div className="card">
-            <h3>{supervision.heading}</h3>
-            <p style={{ marginTop: "0.85rem" }}>{supervision.body}</p>
-            <p>
-              <Link href="/contact">Enquire about supervision &rarr;</Link>
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <section className="section cta">
-        <div className="wrap wrap-narrow">
-          <h2>Taking the first step</h2>
-          <p className="lede" style={{ marginInline: "auto" }}>
-            Getting in touch is often the hardest part. There&rsquo;s no need to
-            explain everything in your first message — a sentence is plenty.
-          </p>
-          <div className="btn-row">
-            <Link className="btn btn-primary" href="/contact">
-              Arrange an initial call
-            </Link>
-            <a className="btn btn-secondary" href={`tel:${contact.phoneLink}`}>
-              {contact.phone}
-            </a>
-          </div>
         </div>
       </section>
     </>

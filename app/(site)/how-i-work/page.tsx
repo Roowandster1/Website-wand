@@ -5,6 +5,7 @@ import {
   clientGroups,
   contact,
   fees,
+  howCounsellingWorks,
   neurodivergence,
   sessionTypes,
   supervision,
@@ -21,183 +22,156 @@ export const metadata: Metadata = {
 export default function HowIWorkPage() {
   return (
     <>
-      <section className="page-head">
-        <div className="wrap">
-          <p className="eyebrow">How I work</p>
-          <h1>What to expect</h1>
-          <p className="lede">
-            Therapy is a strange thing to arrange when you&rsquo;ve never done
-            it before. Here is what actually happens, so there are fewer
-            unknowns before you ring.
-          </p>
-        </div>
+      <section className="wrap page-head">
+        <p className="kicker">How I work</p>
+        <h1>What to expect</h1>
+        <p className="lede" style={{ marginBottom: 0 }}>
+          Therapy is a strange thing to arrange when you&rsquo;ve never done it
+          before. Here is what actually happens, so there are fewer unknowns
+          before you ring.
+        </p>
       </section>
 
-      <section className="section">
-        <div className="wrap split">
-          <div className="prose">
-            <h2>The first conversation</h2>
-            <p>
-              We start with a short call. You can tell me as much or as little
-              as you like about what&rsquo;s brought you here, and ask me
-              anything you want to know about how I work. Nothing is decided in
-              that call and there is no charge for it.
-            </p>
-            <p>
-              If we both feel it&rsquo;s a good fit, we&rsquo;ll arrange a first
-              session. If not, I&rsquo;ll say so honestly, and where I can
-              I&rsquo;ll point you towards someone who might suit you better.
-            </p>
-
-            <h2>Sessions themselves</h2>
-            <p>
-              Each session lasts {fees.duration}, and we meet at the same time
-              each week wherever possible — the rhythm matters more than people
-              expect. {fees.note}
-            </p>
-            <p>
-              There is no set agenda. You bring what&rsquo;s present for you
-              that week; I listen properly, and I don&rsquo;t decide in advance
-              what your experience means. Some weeks that looks like working
-              through something specific, and some weeks it looks like thinking
-              out loud with someone who isn&rsquo;t going to flinch.
-            </p>
-
-            <h2>Confidentiality</h2>
-            <p>
-              What you say to me stays between us. Like all accredited
-              counsellors I discuss my work regularly in clinical supervision,
-              which is how the profession keeps itself safe and useful — your
-              identity isn&rsquo;t part of those conversations. The rare
-              exceptions, where there&rsquo;s a serious risk to your safety or
-              someone else&rsquo;s, I&rsquo;ll always talk through with you
-              first wherever it&rsquo;s possible to do so.
-            </p>
-
-            <h2>Endings</h2>
-            <p>
-              Some people come for a set number of weeks with something
-              particular in mind; others stay open-ended and stop when it feels
-              finished. Either is fine, and you are never committed to more
-              sessions than you want. When you do decide to finish, it helps to
-              have a session or two to end properly rather than simply
-              stopping.
-            </p>
+      <section className="band">
+        <div className="wrap with-aside">
+          <div>
+            {howCounsellingWorks.map((step, stepIndex) => (
+              <div
+                key={step.heading}
+                style={{ maxWidth: "var(--measure-wide)" }}
+              >
+                <h2 style={stepIndex > 0 ? { marginTop: "2.75rem" } : undefined}>
+                  {step.heading}
+                </h2>
+                <div className="prose">
+                  {step.paragraphs.map((paragraph, index) => (
+                    <p key={index}>{paragraph}</p>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
 
-          <div className="stack">
-            <div className="card">
-              <h3>Fees</h3>
-              <div className="fee" style={{ marginTop: "1rem" }}>
-                <strong>{fees.amount}</strong>
-                <span>per {fees.per}</span>
-              </div>
-              <p style={{ fontSize: "0.92rem", color: "var(--ink-soft)" }}>
-                The initial call is free.
+          <aside>
+            <div className="aside-block">
+              <h3>Fee</h3>
+              <p className="fee-figure" style={{ marginBottom: "0.4rem" }}>
+                {fees.amount} <span>per {fees.per}</span>
               </p>
+              <p>The initial call is free.</p>
             </div>
 
-            <div className="card">
+            <div className="aside-block">
+              <h3>Ways we can meet</h3>
+              <ul className="aside-list">
+                {sessionTypes.map((type) => (
+                  <li key={type.label}>
+                    <strong>{type.label}</strong>
+                    {type.detail}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="aside-block">
               <h3>Health insurance</h3>
-              <p style={{ marginTop: "0.85rem" }}>
+              <p>
                 I work with {fees.insurers.join(", ")}. If your policy or your
                 employer&rsquo;s assistance programme covers counselling, do
                 mention it when you get in touch.
               </p>
             </div>
 
-            <div className="card">
-              <h3>Ways we can meet</h3>
-              <ul className="detail-list stacked" style={{ marginTop: "0.75rem" }}>
-                {sessionTypes.map((type) => (
-                  <li key={type.label}>
-                    <span>{type.label}</span>
-                    <span className="muted">{type.detail}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="card">
+            <div className="aside-block">
               <h3>Who I work with</h3>
-              <ul className="tick-list" style={{ marginTop: "0.85rem" }}>
-                {clientGroups.map((group) => (
-                  <li key={group}>{group}</li>
-                ))}
-              </ul>
+              <p>{clientGroups.join(" · ")}</p>
             </div>
 
             {!availability.open && (
-              <div className="notice">
-                <h3>Availability</h3>
+              <div className="aside-block">
+                <h3>Current availability</h3>
                 <p>{availability.waitingListMessage}</p>
               </div>
             )}
-          </div>
+          </aside>
         </div>
       </section>
 
-      <section className="section section-tinted">
+      <section className="band band-tint">
         <div className="wrap">
-          <p className="eyebrow">Approaches</p>
-          <h2>What I draw on</h2>
-          <p className="lede">
-            You don&rsquo;t need to know or care about any of these names. They
-            simply describe where the way I work comes from.
-          </p>
-          <div className="grid grid-pairs" style={{ marginTop: "2.5rem" }}>
-            {therapies.map((therapy) => (
-              <article className="card" key={therapy.name}>
-                <h3>{therapy.name}</h3>
-                <p>{therapy.detail}</p>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="section">
-        <div className="wrap split">
-          <div>
-            <p className="eyebrow">A particular interest</p>
-            <h2>{neurodivergence.heading}</h2>
-            <div className="prose">
-              {neurodivergence.paragraphs.map((paragraph, index) => (
-                <p key={index}>{paragraph}</p>
-              ))}
+          <div className="editorial editorial-wide">
+            <div className="editorial-label">
+              <p className="kicker kicker-rule">Approaches</p>
+              <h2>What I draw on</h2>
+            </div>
+            <div>
+              <p className="lede" style={{ marginBottom: "1.75rem" }}>
+                You don&rsquo;t need to know or care about any of these names.
+                They simply describe where the way I work comes from.
+              </p>
+              <dl className="approaches">
+                {therapies.map((therapy) => (
+                  <div key={therapy.name}>
+                    <dt>{therapy.name}</dt>
+                    <dd>{therapy.detail}</dd>
+                  </div>
+                ))}
+              </dl>
             </div>
           </div>
+        </div>
+      </section>
 
-          <div className="notice">
-            <h3>Worth saying plainly</h3>
-            <p>{neurodivergence.boundary}</p>
+      <section className="band">
+        <div className="wrap">
+          <div className="editorial editorial-wide">
+            <div className="editorial-label">
+              <p className="kicker kicker-rule">A particular interest</p>
+              <h2>{neurodivergence.heading}</h2>
+            </div>
+            <div>
+              <div className="prose-wide" style={{ marginBottom: "2rem" }}>
+                {neurodivergence.paragraphs.map((paragraph, index) => (
+                  <p key={index}>{paragraph}</p>
+                ))}
+              </div>
+              <div className="note">
+                <p className="kicker">Worth saying plainly</p>
+                <p>{neurodivergence.boundary}</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      <section className="section section-tinted">
-        <div className="wrap wrap-narrow">
-          <div className="card">
-            <h3>{supervision.heading}</h3>
-            <p style={{ marginTop: "0.85rem" }}>{supervision.body}</p>
+      <section className="band band-tight band-tint">
+        <div className="wrap">
+          <div className="editorial">
+            <p className="kicker editorial-label" style={{ marginBottom: 0 }}>
+              {supervision.heading}
+            </p>
+            <div className="prose-wide">
+              <p style={{ marginBottom: 0 }}>{supervision.body}</p>
+            </div>
           </div>
         </div>
       </section>
 
-      <section className="section cta">
-        <div className="wrap wrap-narrow">
-          <h2>Still not sure?</h2>
-          <p className="lede" style={{ marginInline: "auto" }}>
+      <section className="band band-deep">
+        <div className="wrap">
+          <p className="kicker kicker-rule">Getting in touch</p>
+          <h2 style={{ maxWidth: "22ch" }}>Still not sure?</h2>
+          <p className="lede">
             That&rsquo;s normal, and it&rsquo;s exactly what the first call is
             for. Ring, text or send a message and we can talk it through.
           </p>
-          <div className="btn-row">
-            <Link className="btn btn-primary" href="/contact">
-              Get in touch
-            </Link>
-            <a className="btn btn-secondary" href={`tel:${contact.phoneLink}`}>
+          <div className="actions">
+            <a className="tel" href={`tel:${contact.phoneLink}`}>
               {contact.phone}
             </a>
+            <Link className="btn btn-primary" href="/contact">
+              Send a message
+            </Link>
           </div>
         </div>
       </section>

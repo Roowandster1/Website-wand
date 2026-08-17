@@ -24,6 +24,7 @@ Edit the text between the `'quote marks'`, save, and the site updates.
 | What to change | Where |
 | --- | --- |
 | Name, credentials, tagline | `site` |
+| The two lines in the header | `site.name`, `site.role` |
 | Taking new clients, or on a waiting list | `availability` |
 | Phone, email, areas, socials | `contact` |
 | Fee, session length, insurers | `fees` |
@@ -34,15 +35,30 @@ Edit the text between the `'quote marks'`, save, and the site updates.
 | The neurodivergence section | `neurodivergence` |
 | The list of things worked with | `areasOfCounselling` |
 | Supervision for other counsellors | `supervision` |
+| The frequently-asked questions | `faqs` |
+| How the work goes, first call to ending | `howCounsellingWorks` |
 | Session types offered in the diary | `treatments` |
 
-Two of those do more than print words:
+Three of those do more than print words:
 
 - **`availability.open`** — set it to `false` and a waiting-list notice appears on
   the home, how-I-work and contact pages. Set it to `true` when there's space
   again and the notices disappear on their own.
 - **`treatments`** — these become the options in the enquiry form *and* in the
   admin diary, so the website and the diary can't drift apart.
+- **`howCounsellingWorks`** — read by both the home page and the How I work
+  page, so the two can't drift apart either. Most of the `faqs` answers read
+  from it and from `fees` for the same reason: change the fee once and the FAQ
+  changes with it.
+
+### A photograph
+
+`about.portrait` is empty, so the site has no photograph of Elizabeth on it.
+People choosing a counsellor want to see who they'd be sitting with, so this is
+worth doing: put the file in the `public` folder and write its name in
+`about.portrait` (e.g. `"/elizabeth.jpg"`). Portrait orientation works best. If
+it's left empty the About sections simply run as text — there is deliberately no
+grey placeholder box.
 
 ### The contact form
 

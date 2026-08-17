@@ -15,7 +15,12 @@
 
 export const site = {
   name: "Elizabeth Wand",
-  /** Shown under her name. Her actual post-nominals, exactly as she lists them. */
+  /**
+   * Shown under her name in the header. Short enough to sit on one line on a
+   * phone, which is why it isn't the full post-nominals.
+   */
+  role: "BACP Accredited Counsellor",
+  /** Her actual post-nominals, exactly as she lists them. Used in the footer. */
   credentials: "BA (Hons) Counselling · MBACP (Accred)",
   tagline: "Person-centred counselling for adults",
   description:
@@ -94,6 +99,19 @@ export const clientGroups = [
 /** Her own words about the work. Each string is one paragraph. */
 export const about = {
   heading: "Hello, I'm Elizabeth",
+  /**
+   * A photograph of Elizabeth, if there is one.
+   *
+   * Put the file in the `public` folder and write its name here, e.g.
+   * "/elizabeth.jpg". Leave it as "" and the About section simply becomes a
+   * single column of text — there is deliberately no grey placeholder box,
+   * because an empty rectangle looks worse than no photograph at all.
+   *
+   * A photograph makes a real difference on a counselling site: people want to
+   * see who they would be sitting with. Portrait orientation works best.
+   */
+  portrait: "",
+  portraitAlt: "Elizabeth Wand",
   intro:
     "I'm a fully qualified and widely experienced BACP-accredited counsellor " +
     "offering counselling to adults.",
@@ -273,6 +291,42 @@ export const areasOfCounselling: Array<{ group: string; items: string[] }> = [
   },
 ];
 
+/**
+ * How the work actually goes, start to finish.
+ *
+ * These four are the wording that was already on the "How I work" page — moved
+ * in here unchanged so the home page and that page read from one source and
+ * cannot drift apart. Edit it once and both update.
+ */
+export const howCounsellingWorks = [
+  {
+    heading: "The first conversation",
+    paragraphs: [
+      "We start with a short call. You can tell me as much or as little as you like about what's brought you here, and ask me anything you want to know about how I work. Nothing is decided in that call and there is no charge for it.",
+      "If we both feel it's a good fit, we'll arrange a first session. If not, I'll say so honestly, and where I can I'll point you towards someone who might suit you better.",
+    ],
+  },
+  {
+    heading: "Sessions themselves",
+    paragraphs: [
+      "Each session lasts 50 minutes, and we meet at the same time each week wherever possible — the rhythm matters more than people expect.",
+      "There is no set agenda. You bring what's present for you that week; I listen properly, and I don't decide in advance what your experience means. Some weeks that looks like working through something specific, and some weeks it looks like thinking out loud with someone who isn't going to flinch.",
+    ],
+  },
+  {
+    heading: "Confidentiality",
+    paragraphs: [
+      "What you say to me stays between us. Like all accredited counsellors I discuss my work regularly in clinical supervision, which is how the profession keeps itself safe and useful — your identity isn't part of those conversations. The rare exceptions, where there's a serious risk to your safety or someone else's, I'll always talk through with you first wherever it's possible to do so.",
+    ],
+  },
+  {
+    heading: "Endings",
+    paragraphs: [
+      "Some people come for a set number of weeks with something particular in mind; others stay open-ended and stop when it feels finished. Either is fine, and you are never committed to more sessions than you want. When you do decide to finish, it helps to have a session or two to end properly rather than simply stopping.",
+    ],
+  },
+];
+
 /** A separate service, for qualified counsellors rather than clients. */
 export const supervision = {
   heading: "Supervision for counsellors",
@@ -281,6 +335,53 @@ export const supervision = {
     "supporting counsellors and therapists to develop a private practice.",
   detail: "Person-centred counsellor and supervisor.",
 };
+
+/**
+ * The questions people actually ask before a first appointment.
+ *
+ * Nothing here is new wording: every answer is a sentence that already appears
+ * somewhere else on the site, and most of them read straight from the objects
+ * above so that changing a fee or a boundary in one place changes it here too.
+ * The point of the section is that someone shouldn't have to read three pages
+ * to find out what a session costs or whether it's confidential.
+ */
+export const faqs: Array<{ question: string; answer: string[] }> = [
+  {
+    question: "What happens in the first conversation?",
+    answer: howCounsellingWorks[0].paragraphs,
+  },
+  {
+    question: "How long is a session, and what does it cost?",
+    answer: [
+      `Sessions last ${fees.duration} and cost ${fees.amount}. The initial call is free.`,
+      fees.note,
+    ],
+  },
+  {
+    question: "Can we meet online or by phone?",
+    answer: sessionTypes.map((type) => `${type.label} — ${type.detail}.`),
+  },
+  {
+    question: "Do you work with health insurance?",
+    answer: [
+      `I work with ${fees.insurers.join(", ")}. If your policy or your ` +
+        "employer's assistance programme covers counselling, do mention it " +
+        "when you get in touch.",
+    ],
+  },
+  {
+    question: "Is what I say confidential?",
+    answer: howCounsellingWorks[2].paragraphs,
+  },
+  {
+    question: "How many sessions will I need?",
+    answer: howCounsellingWorks[3].paragraphs,
+  },
+  {
+    question: "Can you diagnose or assess ADHD or autism?",
+    answer: [neurodivergence.boundary],
+  },
+];
 
 /** The main menu. Order here = order in the header. */
 export const nav = [

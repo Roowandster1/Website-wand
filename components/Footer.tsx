@@ -1,6 +1,10 @@
 import Link from "next/link";
-import { availability, contact, nav, site } from "@/content/site";
+import { contact, nav, site } from "@/content/site";
 
+/**
+ * Minimal and professional: who, how to reach her, where to go next, and the
+ * registration line. Three columns on a wide screen, stacked on a phone.
+ */
 export default function Footer() {
   const socials = [
     { label: "Facebook", href: contact.facebook },
@@ -12,16 +16,17 @@ export default function Footer() {
       <div className="wrap">
         <div className="footer-grid">
           <div>
-            <h3>{site.name}</h3>
-            <p style={{ color: "var(--ink-soft)", marginBottom: 0 }}>
+            <h2>{site.name}</h2>
+            <p className="fine" style={{ margin: 0 }}>
               {site.credentials}
-              <br />
-              {site.tagline}
+            </p>
+            <p className="fine" style={{ margin: "0.35rem 0 0" }}>
+              {contact.locations.join(" · ")} · Online &amp; by phone
             </p>
           </div>
 
           <div>
-            <h3>Get in touch</h3>
+            <h3>Contact</h3>
             <ul>
               <li>
                 <a href={`tel:${contact.phoneLink}`}>{contact.phone}</a>
@@ -47,18 +52,6 @@ export default function Footer() {
                   <Link href={item.href}>{item.label}</Link>
                 </li>
               ))}
-            </ul>
-          </div>
-
-          <div>
-            <h3>Where &amp; when</h3>
-            <ul>
-              {contact.locations.map((place) => (
-                <li key={place} style={{ color: "var(--ink-soft)" }}>
-                  {place}
-                </li>
-              ))}
-              <li style={{ color: "var(--ink-soft)" }}>{availability.hours}</li>
             </ul>
           </div>
         </div>
