@@ -51,15 +51,24 @@ export function checkConfiguration(): boolean {
     );
   }
 
-  if (problems.length === 0) return true;
+  // Always says something. A silent log leaves you unable to tell a healthy
+  // deploy from one that never reached this code.
+  if (problems.length === 0) {
+    console.log(
+      `[startup] configuration OK — database at ${dbPath}, encryption key present`,
+    );
+    return true;
+  }
 
   const rule = "─".repeat(70);
   console.error(
     `\n${rule}\n` +
-      "  This deployment is not configured correctly and cannot start.\n" +
+      "  The site is running, but some things need setting on the server.\n" +
       `${rule}\n\n` +
       problems.map((p) => `  • ${p}`).join("\n\n") +
-      '\n\n  See the "Putting it online" section of README.md.\n' +
+      "\n\n  The public website works. The admin dashboard will show this too,\n" +
+      "  and /api/health/ lists it as JSON.\n" +
+      '  See the "Putting it online" section of README.md.\n' +
       `${rule}\n`,
   );
 

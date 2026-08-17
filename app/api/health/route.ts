@@ -3,21 +3,24 @@ import { decrypt, encrypt } from "@/lib/crypto";
 import { getDb } from "@/lib/db";
 
 /**
- * Readiness check, for Railway and any other host that polls before switching
- * traffic over.
+ * Liveness and diagnostics.
  *
- * It deliberately fails when the app is misconfigured rather than reporting
- * healthy and breaking the first time she saves a client record. Nothing
- * sensitive is returned — no counts, no paths, no key material.
+ * This deliberately answers 200 whenever the server can serve requests at all,
+ * and reports configuration problems as `warnings` rather than failing.
  *
- * Imports are static, not dynamic: a dynamic `await import()` of a module that
- * fails can leave the request hanging with nothing logged, which on a host that
- * polls this endpoint means an unexplained healthcheck timeout — the exact
- * failure this endpoint exists to prevent.
+ * It used to return 503 for a missing encryption key, on the reasoning that a
+ * deploy which cannot store health records should not go live. In practice that
+ * was the wrong trade: the platform shows "Healthcheck failure" and nothing
+ * else, so a missing environment variable looked identical to a crashed server
+ * and blocked the very deploy you need in order to investigate. A configuration
+ * problem now surfaces in the admin dashboard, where the person who can fix it
+ * will actually see it, and here in the JSON for anyone checking by hand.
+ *
+ * Visit /api/health/ on a running deployment to see exactly what is wrong.
+ * Nothing sensitive is returned — no counts, no paths, no key material.
  */
 export const dynamic = "force-dynamic";
 
-/** Never let a wedged check hold the response open. */
 function withTimeout<T>(label: string, ms: number, work: () => T): Promise<T> {
   return Promise.race([
     (async () => work())(),
@@ -28,51 +31,58 @@ function withTimeout<T>(label: string, ms: number, work: () => T): Promise<T> {
 }
 
 export async function GET() {
-  const problems: string[] = [];
+  const warnings: string[] = [];
 
-  // 1. Can we open and write to the database? Catches a missing or read-only
-  //    volume, which is the classic first-deploy failure.
+  // Can the database be opened and written to? Catches a missing or read-only
+  // volume — the thing that silently loses client records.
+  let databaseOk = false;
   try {
     await withTimeout("database check", 5000, () => {
       const db = getDb();
       db.prepare("SELECT 1").get();
-      // A write, not just a read — the filesystem may be mounted read-only.
       db.prepare(
         `INSERT INTO backup_runs (started_at, status, detail)
-         VALUES (datetime('now'), 'healthcheck', 'readiness probe')`,
+         VALUES (datetime('now'), 'healthcheck', 'liveness probe')`,
       ).run();
       db.prepare(`DELETE FROM backup_runs WHERE status = 'healthcheck'`).run();
+      databaseOk = true;
     });
   } catch (error) {
     const detail = error instanceof Error ? error.message : String(error);
-    console.error("[health] database check failed:", detail);
-    problems.push(`database not writable: ${detail}`);
+    console.error("[health] database not writable:", detail);
+    warnings.push(
+      `Database is not writable (${detail}). Client records cannot be saved. ` +
+        "Attach a persistent volume and point DATABASE_PATH inside it.",
+    );
   }
 
-  // 2. Is the encryption key present and the right shape? Without it, saving a
-  //    treatment note would throw at runtime.
+  // Is the encryption key usable? Without it, health information cannot be
+  // stored — but the public website works perfectly, so this is not fatal to
+  // serving traffic.
   try {
     await withTimeout("encryption check", 5000, () => {
-      if (decrypt(encrypt("readiness")) !== "readiness") {
+      if (decrypt(encrypt("liveness")) !== "liveness") {
         throw new Error("round-trip mismatch");
       }
     });
   } catch (error) {
     const detail =
       error instanceof Error ? error.message.split("\n")[0] : String(error);
-    console.error("[health] encryption check failed:", detail);
-    problems.push(`DATA_ENCRYPTION_KEY: ${detail}`);
-  }
-
-  if (problems.length > 0) {
-    return NextResponse.json(
-      { status: "not ready", problems },
-      { status: 503, headers: { "Cache-Control": "no-store" } },
+    console.error("[health] encryption not usable:", detail);
+    warnings.push(
+      `DATA_ENCRYPTION_KEY is not usable (${detail}). Treatment notes and ` +
+        "health information cannot be saved until it is set to 32 random " +
+        "bytes, base64 encoded.",
     );
   }
 
   return NextResponse.json(
-    { status: "ok" },
+    {
+      status: warnings.length === 0 ? "ok" : "degraded",
+      serving: true,
+      databaseWritable: databaseOk,
+      warnings,
+    },
     { headers: { "Cache-Control": "no-store" } },
   );
 }
