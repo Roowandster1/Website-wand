@@ -2,9 +2,18 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   // The public marketing pages are still prerendered to static HTML at build
-  // time — but the app no longer uses `output: "export"`, because the admin
-  // dashboard needs a running server for sessions, the database and encryption.
-  // See "Putting it online" in README.md.
+  // time — but this is not a static export, because the admin dashboard needs a
+  // running server for sessions, the database and encryption.
+  //
+  // `standalone` traces only the files the server actually needs, turning a
+  // 460MB node_modules into something a container can copy without running out
+  // of memory. It is opt-in via the environment so that `npm run dev` and
+  // `npm start` keep working normally on a laptop — `next start` does not run a
+  // standalone build, `node server.js` does. The Dockerfile sets this.
+  ...(process.env.BUILD_STANDALONE === "1"
+    ? { output: "standalone" as const }
+    : {}),
+
   trailingSlash: true,
 
   // better-sqlite3 is a native module and must not be bundled.

@@ -1,0 +1,26 @@
+# Everything here would otherwise be uploaded to the build machine as build
+# context. Without this file that is ~620MB, most of it a local node_modules
+# built for a different machine — which then overwrites the one the image just
+# installed, and is large enough on its own to make the build run out of
+# resources and die with "context canceled".
+node_modules
+.next
+out
+
+# The live database, backups, and local secrets. These must never enter an image.
+data
+.env
+.env.local
+.env*.local
+
+.git
+.gitignore
+npm-debug.log*
+
+# Documentation and CI config are not needed to run the app.
+README.md
+SECURITY.md
+docs
+.github
+.vscode
+.DS_Store
