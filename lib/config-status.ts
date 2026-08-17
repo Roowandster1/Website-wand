@@ -9,6 +9,32 @@ import "server-only";
  */
 export type ConfigProblem = { title: string; detail: string };
 
+/**
+ * Why health information cannot be saved right now, or null if it can.
+ *
+ * Checked before any write that encrypts, so a server that has not been given
+ * its key explains itself instead of throwing a stack trace at whoever is
+ * typing. Everything that does not touch health data keeps working.
+ */
+export function encryptionUnavailable(): string | null {
+  const key = process.env.DATA_ENCRYPTION_KEY;
+
+  if (!key) {
+    return (
+      "Health information can't be saved yet because the encryption key " +
+      "(DATA_ENCRYPTION_KEY) hasn't been set on the server. Everything else " +
+      "works — you can still add names, contact details and appointments."
+    );
+  }
+  if (Buffer.from(key, "base64").length !== 32) {
+    return (
+      "Health information can't be saved because the encryption key is the " +
+      "wrong length. It needs to be exactly 32 random bytes, base64 encoded."
+    );
+  }
+  return null;
+}
+
 export function configProblems(): ConfigProblem[] {
   const problems: ConfigProblem[] = [];
 

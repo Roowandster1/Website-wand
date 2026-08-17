@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useState } from "react";
 
 /**
  * Adding a treatment note. Deliberately sits at the top of the record so it is
@@ -9,17 +9,25 @@ import { useRef } from "react";
 export default function NoteForm({
   action,
 }: {
-  action: (formData: FormData) => Promise<void>;
+  action: (formData: FormData) => Promise<{ error?: string }>;
 }) {
-  const formRef = useRef<HTMLFormElement>(null);
+  const [error, setError] = useState<string | null>(null);
+  // Controlled on purpose. React clears a form once its action returns, so an
+  // uncontrolled textarea would lose a written-up session the moment anything
+  // goes wrong — which is exactly when you least want to retype it.
+  const [body, setBody] = useState("");
   const today = new Date().toISOString().slice(0, 10);
 
   return (
     <form
-      ref={formRef}
       action={async (formData) => {
-        await action(formData);
-        formRef.current?.reset();
+        const result = await action(formData);
+        if (result?.error) {
+          setError(result.error);
+          return;
+        }
+        setError(null);
+        setBody("");
       }}
       className="form form-wide"
     >
@@ -30,9 +38,17 @@ export default function NoteForm({
           name="body"
           rows={4}
           required
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
           placeholder="What you did this session, how they responded, anything to pick up next time."
         />
       </div>
+
+      {error && (
+        <p className="form-status" data-tone="error" role="alert">
+          {error}
+        </p>
+      )}
 
       <div
         style={{

@@ -15,6 +15,7 @@ import {
   type RepeatEvery,
 } from "@/lib/appointments";
 import { logAudit } from "@/lib/audit";
+import { encryptionUnavailable } from "@/lib/config-status";
 import { formatTime, inputToSql } from "@/lib/dates";
 import { parseMoney } from "@/lib/payments";
 
@@ -45,6 +46,13 @@ function readForm(
   const status = String(formData.get("status") ?? "booked") as
     | AppointmentInput["status"];
 
+  const notes = String(formData.get("notes") ?? "").trim();
+  if (notes) {
+    // Booking notes are encrypted too, so they need the key like anything else.
+    const blocked = encryptionUnavailable();
+    if (blocked) return { error: blocked };
+  }
+
   return {
     input: {
       clientId,
@@ -53,7 +61,7 @@ function readForm(
       durationMins,
       pricePence,
       status,
-      notes: String(formData.get("notes") ?? "").trim(),
+      notes,
     },
   };
 }
