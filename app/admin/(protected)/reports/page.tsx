@@ -14,7 +14,7 @@ import { addDays, formatDateShort, todaySql } from "@/lib/dates";
 import { formatMoney } from "@/lib/payments";
 import { siteStats } from "@/lib/pageviews";
 
-export const metadata: Metadata = { title: "Insights" };
+export const metadata: Metadata = { title: "Reports" };
 export const dynamic = "force-dynamic";
 
 const RANGES = [
@@ -59,7 +59,7 @@ export default async function InsightsPage({
     <>
       <div className="admin-head">
         <div>
-          <h1>Insights</h1>
+          <h1>Reports</h1>
           <p>How the practice is doing over the last {days} days.</p>
         </div>
         <div className="toolbar" style={{ margin: 0 }}>
@@ -69,7 +69,7 @@ export default async function InsightsPage({
               className={`btn btn-small ${
                 range.days === days ? "btn-primary" : "btn-secondary"
               }`}
-              href={`/admin/insights?days=${range.days}`}
+              href={`/admin/reports?days=${range.days}`}
             >
               {range.label}
             </Link>

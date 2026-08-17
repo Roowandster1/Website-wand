@@ -1,8 +1,10 @@
 import { redirect } from "next/navigation";
-import AdminNav from "@/components/admin/AdminNav";
 import IdleGuard from "@/components/admin/IdleGuard";
+import Sidebar from "@/components/admin/Sidebar";
 import { getCurrentUser, IDLE_MINUTES, userCount } from "@/lib/auth";
 import { configProblems } from "@/lib/config-status";
+import { countNewEnquiries } from "@/lib/enquiries";
+import { countOverdue } from "@/lib/tasks";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -31,7 +33,20 @@ export default async function ProtectedLayout({
 
   return (
     <div className="admin">
-      <AdminNav userName={user.name} />
+      <Sidebar
+        user={{
+          name: user.name,
+          email: user.email,
+          jobTitle: user.job_title ?? null,
+          photoPath: user.photo_path ?? null,
+          role: user.role ?? "owner",
+        }}
+        counts={{
+          overdueTasks: countOverdue(),
+          newEnquiries: countNewEnquiries(),
+        }}
+      />
+
       <div className="admin-main">
         {problems.length > 0 && (
           <div className="callout callout-warn" style={{ marginBottom: "1.5rem" }}>
@@ -45,6 +60,7 @@ export default async function ProtectedLayout({
         )}
         {children}
       </div>
+
       <IdleGuard idleMinutes={IDLE_MINUTES} />
     </div>
   );

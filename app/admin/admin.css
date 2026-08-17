@@ -3,9 +3,50 @@
    same practice, but denser — this is a working tool, not a shop window.
    --------------------------------------------------------------------------- */
 
+/* ---------------------------------------------------------------------------
+   Admin tokens.
+
+   The dashboard has its own palette rather than borrowing the website's warm
+   cream and terracotta. The public site is a shop window and wants warmth; this
+   is a clinical tool somebody sits in front of for hours, and wants calm and
+   low contrast between surfaces. Sage-grey, with one deeper teal for whatever
+   is currently selected.
+
+   Change --sidebar to restyle the whole left column.
+   --------------------------------------------------------------------------- */
+
 .admin-root {
+  --page:        #f7f9f8;
+  --panel:       #ffffff;
+  --panel-2:     #eef2f1;
+  --sidebar:     #d7e3df;
+  --sidebar-2:   #c6d6d1;
+  --sidebar-ink: #24332f;
+  --ink:         #1e2a28;
+  --ink-soft:    #5c6b67;
+  --line:        #dde5e2;
+  --accent:      #12736b;
+  --accent-soft: #dceae7;
+
   min-height: 100vh;
-  background: var(--cream);
+  background: var(--page);
+  color: var(--ink);
+}
+
+@media (prefers-color-scheme: dark) {
+  .admin-root:not([data-theme="light"]) {
+    --page:        #101514;
+    --panel:       #18201e;
+    --panel-2:     #202a28;
+    --sidebar:     #1b2523;
+    --sidebar-2:   #26332f;
+    --sidebar-ink: #dfe9e6;
+    --ink:         #e4ecea;
+    --ink-soft:    #93a29e;
+    --line:        #29352f;
+    --accent:      #55bdb2;
+    --accent-soft: #14322f;
+  }
 }
 
 /* --- Sign-in and setup screens --------------------------------------------- */
@@ -15,109 +56,252 @@
   display: grid;
   place-items: center;
   padding: 2rem 1.5rem;
-  background: linear-gradient(180deg, var(--cream-deep), var(--cream));
+  background: linear-gradient(180deg, var(--sidebar), var(--page));
 }
 
 .auth-card {
   width: 100%;
   max-width: 27rem;
-  background: var(--paper);
+  background: var(--panel);
   border: 1px solid var(--line);
-  border-radius: var(--radius);
+  border-radius: 16px;
   padding: 2.5rem;
-  box-shadow: var(--shadow);
+  box-shadow: 0 1px 2px rgba(30, 42, 40, .04), 0 12px 32px rgba(30, 42, 40, .07);
 }
 
-.auth-card h1 {
-  font-size: 1.9rem;
-  margin-bottom: 0.35rem;
-}
+.auth-card h1 { font-size: 1.9rem; margin-bottom: .35rem; }
 
 .auth-sub {
   color: var(--ink-soft);
-  font-size: 0.95rem;
+  font-size: .95rem;
   margin-bottom: 1.75rem;
 }
 
-/* --- Shell ----------------------------------------------------------------- */
+/* --- Shell: sidebar left, content right ------------------------------------ */
 
-.admin-nav {
-  background: var(--ink);
-  color: var(--cream);
-  position: sticky;
-  top: 0;
-  z-index: 30;
+.admin {
+  min-height: 100vh;
 }
 
-.admin-nav-inner {
-  max-width: 78rem;
-  margin-inline: auto;
-  padding: 0.85rem 1.5rem;
+@media (min-width: 60rem) {
+  .admin {
+    display: grid;
+    grid-template-columns: 16.5rem minmax(0, 1fr);
+  }
+}
+
+.sidebar {
+  background: var(--sidebar);
+  color: var(--sidebar-ink);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 1.5rem 1rem;
+  border-right: 1px solid var(--sidebar-2);
+}
+
+@media (min-width: 60rem) {
+  .sidebar {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+  }
+}
+
+/* Below the breakpoint it becomes a drawer, so the whole width goes to work. */
+@media (max-width: 59.99rem) {
+  .sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: 16.5rem;
+    z-index: 40;
+    transform: translateX(-100%);
+    transition: transform .2s ease;
+  }
+  .sidebar.is-open { transform: translateX(0); }
+}
+
+.sidebar-brand {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
-  flex-wrap: wrap;
+  gap: .6rem;
+  font-size: 1.05rem;
+  font-weight: 620;
+  letter-spacing: -.01em;
+  padding-inline: .35rem;
 }
 
-.admin-brand {
-  font-family: var(--serif);
-  font-size: 1.15rem;
-  color: var(--cream);
-  text-decoration: none;
-  white-space: nowrap;
-}
-.admin-brand:hover {
-  color: #fff;
+.sidebar-brand-mark {
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 7px;
+  background: var(--accent);
+  flex: 0 0 auto;
 }
 
-.admin-nav nav {
+.sidebar-nav {
   display: flex;
-  gap: 0.35rem;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 1.35rem;
   flex: 1;
+  overflow-y: auto;
 }
 
-.admin-nav nav a {
-  color: #e2d8cb;
+.sidebar-group { display: flex; flex-direction: column; gap: .12rem; }
+
+.sidebar-heading {
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+  opacity: .55;
+  margin: 0 0 .35rem .6rem;
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .5rem;
+  padding: .52rem .7rem;
+  border-radius: 9px;
+  color: inherit;
   text-decoration: none;
-  font-size: 0.94rem;
-  padding: 0.4rem 0.8rem;
+  font-size: .95rem;
+}
+
+.sidebar-link:hover { background: var(--sidebar-2); color: inherit; }
+
+.sidebar-link[aria-current="page"] {
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+}
+
+.sidebar-link.is-unbuilt { opacity: .45; cursor: default; }
+
+.sidebar-soon,
+.sidebar-badge {
+  font-size: .66rem;
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  padding: .1rem .4rem;
   border-radius: 999px;
 }
-.admin-nav nav a:hover {
-  background: rgba(255, 255, 255, 0.1);
+
+.sidebar-soon { border: 1px solid currentColor; opacity: .8; }
+
+.sidebar-badge {
+  background: #b4451f;
   color: #fff;
-}
-.admin-nav nav a[aria-current="page"] {
-  background: var(--clay);
-  color: #fff;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
 }
 
-.admin-user {
-  display: flex;
+.sidebar-link[aria-current="page"] .sidebar-badge {
+  background: rgba(255, 255, 255, .25);
+}
+
+/* --- Who is signed in, pinned to the bottom -------------------------------- */
+
+.sidebar-user {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: .3rem .65rem;
   align-items: center;
-  gap: 0.9rem;
-  font-size: 0.88rem;
-  color: #cdbfae;
+  padding-top: 1rem;
+  border-top: 1px solid var(--sidebar-2);
 }
 
-.link-button {
-  background: none;
-  border: none;
-  color: #cdbfae;
-  font: inherit;
-  text-decoration: underline;
-  cursor: pointer;
-  padding: 0;
-}
-.link-button:hover {
+.sidebar-avatar {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background: var(--accent);
   color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: .85rem;
+  font-weight: 700;
+  overflow: hidden;
+  flex: 0 0 auto;
 }
+
+.sidebar-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+.sidebar-identity { min-width: 0; }
+
+.sidebar-name {
+  margin: 0;
+  font-weight: 620;
+  font-size: .93rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-meta {
+  margin: 0;
+  font-size: .78rem;
+  opacity: .7;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-user form { grid-column: 1 / -1; }
+
+.sidebar-signout {
+  background: none;
+  border: 1px solid var(--sidebar-2);
+  color: inherit;
+  font: inherit;
+  font-size: .82rem;
+  border-radius: 8px;
+  padding: .35rem .7rem;
+  cursor: pointer;
+  width: 100%;
+  margin-top: .5rem;
+}
+
+.sidebar-signout:hover { background: var(--sidebar-2); }
+
+.sidebar-toggle {
+  position: fixed;
+  top: .75rem;
+  left: .75rem;
+  z-index: 45;
+  background: var(--sidebar);
+  color: var(--sidebar-ink);
+  border: 1px solid var(--sidebar-2);
+  border-radius: 9px;
+  padding: .45rem .8rem;
+  font: inherit;
+  font-size: .9rem;
+  cursor: pointer;
+}
+
+@media (min-width: 60rem) { .sidebar-toggle { display: none; } }
+
+.sidebar-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 35;
+  background: rgba(30, 42, 40, .45);
+  border: none;
+  cursor: pointer;
+}
+
+@media (min-width: 60rem) { .sidebar-scrim { display: none; } }
 
 .admin-main {
-  max-width: 78rem;
-  margin-inline: auto;
-  padding: 2rem 1.5rem 4rem;
+  min-width: 0;
+  padding: 2rem 1.75rem 4rem;
+}
+
+@media (max-width: 59.99rem) {
+  .admin-main { padding-top: 3.75rem; }
 }
 
 /* --- Page furniture -------------------------------------------------------- */
@@ -142,7 +326,7 @@
 }
 
 .panel {
-  background: var(--paper);
+  background: var(--panel);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   padding: 1.5rem;
@@ -181,7 +365,7 @@
 }
 
 .stat {
-  background: var(--paper);
+  background: var(--panel);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   padding: 1.25rem 1.5rem;
@@ -244,7 +428,7 @@ table.data tr:last-child td {
 }
 
 table.data tbody tr:hover {
-  background: var(--cream);
+  background: var(--page);
 }
 
 table.data .num {
@@ -267,7 +451,7 @@ table.data .num {
   font-weight: 600;
   padding: 0.2rem 0.6rem;
   border-radius: 999px;
-  background: var(--cream-deep);
+  background: var(--panel-2);
   color: var(--ink-soft);
   white-space: nowrap;
 }
@@ -282,16 +466,16 @@ table.data .num {
 }
 .badge-cancelled,
 .badge-no-show {
-  background: var(--clay-wash);
-  color: var(--clay-dark);
+  background: var(--accent-soft);
+  color: var(--accent);
 }
 .badge-caution {
   background: #fbe9c9;
   color: #8a5d00;
 }
 .badge-owed {
-  background: var(--clay-wash);
-  color: var(--clay-dark);
+  background: var(--accent-soft);
+  color: var(--accent);
 }
 
 /* --- Forms ----------------------------------------------------------------- */
@@ -319,7 +503,7 @@ table.data .num {
   border-radius: var(--radius);
   padding: 1.5rem;
   margin: 0 0 1.5rem;
-  background: var(--paper);
+  background: var(--panel);
 }
 
 .fieldset legend {
@@ -360,12 +544,12 @@ table.data .num {
 
 .btn-danger {
   background: transparent;
-  color: var(--clay-dark);
+  color: var(--accent);
   border-color: #e3c4b1;
 }
 .btn-danger:hover {
-  background: var(--clay-wash);
-  color: var(--clay-dark);
+  background: var(--accent-soft);
+  color: var(--accent);
 }
 
 /* --- Clinical data emphasis ------------------------------------------------ */
@@ -373,8 +557,8 @@ table.data .num {
 /* Health information gets a visible border so it is obvious on screen which
    parts of a record are the confidential ones. */
 .clinical {
-  border-left: 3px solid var(--clay);
-  background: var(--clay-wash);
+  border-left: 3px solid var(--accent);
+  background: var(--accent-soft);
   border-radius: 0 var(--radius) var(--radius) 0;
   padding: 1.25rem 1.5rem;
   margin-bottom: 1.5rem;
@@ -426,8 +610,8 @@ table.data .num {
 }
 
 .day-heading.is-today {
-  border-bottom-color: var(--clay);
-  color: var(--clay-dark);
+  border-bottom-color: var(--accent);
+  color: var(--accent);
 }
 
 .slot {
@@ -474,7 +658,7 @@ table.data .num {
   padding: 0.55rem 0.8rem;
   border: 1px solid var(--line);
   border-radius: 10px;
-  background: var(--paper);
+  background: var(--panel);
   color: var(--ink);
 }
 
@@ -512,7 +696,7 @@ table.data .num {
 .mono {
   font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   font-size: 0.9rem;
-  background: var(--cream-deep);
+  background: var(--panel-2);
   padding: 0.15rem 0.4rem;
   border-radius: 5px;
   word-break: break-all;
@@ -529,7 +713,7 @@ table.data .num {
 
 .recovery-codes li {
   font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  background: var(--cream-deep);
+  background: var(--panel-2);
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 0.5rem 0.75rem;
@@ -563,7 +747,7 @@ table.data .num {
 
 .bars-track {
   display: block;
-  background: var(--cream-deep);
+  background: var(--panel-2);
   border-radius: 999px;
   height: 0.7rem;
   overflow: hidden;
@@ -572,7 +756,7 @@ table.data .num {
 .bars-fill {
   display: block;
   height: 100%;
-  background: var(--clay);
+  background: var(--accent);
   border-radius: 999px;
 }
 
@@ -593,7 +777,7 @@ table.data .num {
   width: calc(100% - 2.5rem);
   max-width: 30rem;
   background: var(--ink);
-  color: var(--cream);
+  color: var(--page);
   border-radius: var(--radius);
   padding: 1.15rem 1.35rem;
   box-shadow: 0 10px 40px rgba(58, 50, 43, 0.3);
@@ -619,4 +803,102 @@ table.data .num {
 
 .breadcrumb a {
   color: var(--ink-soft);
+}
+
+/* --- Task list ------------------------------------------------------------- */
+
+/* A real checkbox would need a label and a form per row anyway; this is a
+   submit button that looks like one, so ticking works without JavaScript. */
+.task-check {
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 5px;
+  border: 1.5px solid var(--line);
+  background: var(--panel);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  font-size: 0.8rem;
+  line-height: 1;
+  color: #fff;
+  padding: 0;
+}
+
+.task-check:hover { border-color: var(--accent); }
+
+.task-check[data-done="true"] {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.badge-priority-urgent { background: #f6d9d0; color: #93341b; }
+.badge-priority-high    { background: #fbe9c9; color: #8a5d00; }
+.badge-priority-low     { background: var(--panel-2); color: var(--ink-soft); }
+
+@media (prefers-color-scheme: dark) {
+  .admin-root:not([data-theme="light"]) .badge-priority-urgent {
+    background: #3d1d13; color: #f0b8a4;
+  }
+  .admin-root:not([data-theme="light"]) .badge-priority-high {
+    background: #3a2d10; color: #e8c887;
+  }
+}
+
+/* --- Buttons, on the admin palette ----------------------------------------- */
+
+/* The shared button styles live in globals.css and use the website's warm
+   terracotta. Left alone, that reads as an accident against the sage sidebar —
+   so the dashboard restates them on its own tokens. */
+
+.admin-root .btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.admin-root .btn-primary:hover {
+  filter: brightness(0.92);
+  color: #fff;
+}
+
+.admin-root .btn-secondary {
+  background: var(--panel);
+  border-color: var(--line);
+  color: var(--ink);
+}
+
+.admin-root .btn-secondary:hover {
+  background: var(--panel-2);
+  border-color: var(--accent);
+  color: var(--ink);
+}
+
+.admin-root a {
+  color: var(--accent);
+}
+
+.admin-root a:hover {
+  color: var(--ink);
+}
+
+.admin-root .btn-danger {
+  background: transparent;
+  border-color: #dcc0b4;
+  color: #93341b;
+}
+
+.admin-root .btn-danger:hover {
+  background: #f6e3db;
+  color: #93341b;
+}
+
+@media (prefers-color-scheme: dark) {
+  .admin-root:not([data-theme="light"]) .btn-danger {
+    border-color: #4a2a1e;
+    color: #eeae95;
+  }
+  .admin-root:not([data-theme="light"]) .btn-danger:hover {
+    background: #3a2018;
+    color: #eeae95;
+  }
 }

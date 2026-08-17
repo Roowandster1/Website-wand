@@ -40,6 +40,12 @@ export type User = {
   recovery_codes: string | null;
   failed_attempts: number;
   locked_until: string | null;
+  /* Added when the practice grew from one practitioner to a team. Nullable
+     because databases created before that migration will not have them set. */
+  role: string | null;
+  job_title: string | null;
+  photo_path: string | null;
+  is_active: number | null;
 };
 
 // ---------------------------------------------------------------------------

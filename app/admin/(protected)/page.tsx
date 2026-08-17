@@ -1,24 +1,43 @@
 import Link from "next/link";
-import {
-  listAppointmentsBetween,
-  upcomingAppointments,
-} from "@/lib/appointments";
-import { listClients } from "@/lib/clients";
+import { listAppointmentsBetween } from "@/lib/appointments";
 import { addDays, formatDate, formatDateShort, formatTime, todaySql } from "@/lib/dates";
-import { formatMoney, incomeByMonth, listOutstanding } from "@/lib/payments";
+import { listOpenEnquiries } from "@/lib/enquiries";
+import { formatMoney, listOutstanding } from "@/lib/payments";
+import { absencesToday } from "@/lib/team";
+import { listTasks } from "@/lib/tasks";
 
 export const dynamic = "force-dynamic";
 
-export default function DashboardPage() {
+/**
+ * Today.
+ *
+ * Built around one rule: only show what needs a decision. A wall of numbers
+ * that is green every morning stops being read within a week, so anything
+ * healthy stays quiet and the sections that need attention are the ones that
+ * appear at all.
+ */
+export default function TodayPage() {
   const today = todaySql();
-  const todaysAppointments = listAppointmentsBetween(today, addDays(today, 1));
-  const upcoming = upcomingAppointments(8);
-  const outstanding = listOutstanding();
-  const clients = listClients();
-  const income = incomeByMonth(Number(today.slice(0, 4)));
 
-  const owedTotal = outstanding.reduce((sum, row) => sum + row.owedPence, 0);
-  const thisMonth = income.months.find((m) => m.month === today.slice(0, 7));
+  const sessions = listAppointmentsBetween(today, addDays(today, 1));
+  const attending = sessions.filter((s) => s.status !== "cancelled");
+  const cancelled = sessions.filter((s) => s.status === "cancelled");
+
+  const overdueTasks = listTasks({ overdueOnly: true });
+  const dueToday = listTasks().filter((t) => t.dueOn === today && !t.isOverdue);
+
+  const enquiries = listOpenEnquiries();
+  const newEnquiries = enquiries.filter((e) => e.stage === "new");
+  const away = absencesToday();
+  const outstanding = listOutstanding();
+  const owed = outstanding.reduce((sum, row) => sum + row.owedPence, 0);
+
+  const nothingPressing =
+    attending.length === 0 &&
+    overdueTasks.length === 0 &&
+    dueToday.length === 0 &&
+    newEnquiries.length === 0 &&
+    away.length === 0;
 
   return (
     <>
@@ -37,38 +56,82 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className="admin-grid admin-grid-3" style={{ marginBottom: "1.5rem" }}>
-        <div className="stat">
-          <p className="stat-label">Today</p>
-          <p className="stat-value">{todaysAppointments.length}</p>
-          <p className="stat-note">
-            {todaysAppointments.length === 1 ? "appointment" : "appointments"} booked
+      {nothingPressing && (
+        <div className="callout">
+          <h2>Nothing needs you this morning</h2>
+          <p>
+            No sessions, no overdue tasks, no unanswered enquiries. This section
+            only fills up when something wants a decision.
           </p>
         </div>
-        <div className="stat">
-          <p className="stat-label">Outstanding</p>
-          <p className="stat-value">{formatMoney(owedTotal)}</p>
-          <p className="stat-note">
-            across {outstanding.length}{" "}
-            {outstanding.length === 1 ? "appointment" : "appointments"}
+      )}
+
+      {/* Attention first: overdue work, then unanswered people. */}
+      {overdueTasks.length > 0 && (
+        <section className="panel panel-flush" style={{ marginBottom: "1.5rem" }}>
+          <h2 style={{ color: "var(--accent)" }}>
+            Overdue ({overdueTasks.length})
+          </h2>
+          <div className="table-scroll">
+            <table className="data">
+              <tbody>
+                {overdueTasks.slice(0, 6).map((task) => (
+                  <tr key={task.id}>
+                    <td>
+                      <strong>{task.title}</strong>
+                      <div className="slot-detail">
+                        {task.assigneeName ?? "Unassigned"}
+                        {task.clientName && ` · ${task.clientName}`}
+                      </div>
+                    </td>
+                    <td className="num">
+                      <span className="badge badge-owed">
+                        due {formatDateShort(task.dueOn!)}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p style={{ padding: "0.85rem 1.15rem", margin: 0 }}>
+            <Link href="/admin/tasks?show=overdue">See all overdue</Link>
           </p>
-        </div>
-        <div className="stat">
-          <p className="stat-label">This month</p>
-          <p className="stat-value">{formatMoney(thisMonth?.totalPence ?? 0)}</p>
-          <p className="stat-note">
-            {formatMoney(income.totalPence)} so far in {today.slice(0, 4)}
-          </p>
-        </div>
-      </div>
+        </section>
+      )}
+
+      {newEnquiries.length > 0 && (
+        <section className="panel panel-flush" style={{ marginBottom: "1.5rem" }}>
+          <h2>Unanswered enquiries ({newEnquiries.length})</h2>
+          <div className="table-scroll">
+            <table className="data">
+              <tbody>
+                {newEnquiries.slice(0, 5).map((enquiry) => (
+                  <tr key={enquiry.id}>
+                    <td>
+                      <strong>{enquiry.name}</strong>
+                      <div className="slot-detail">
+                        {enquiry.referralSource || "Source unknown"} ·{" "}
+                        {formatDateShort(enquiry.createdAt)}
+                      </div>
+                    </td>
+                    <td className="num">
+                      <Link href="/admin/enquiries">Open</Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
 
       <div className="admin-grid admin-grid-2">
         <section className="panel panel-flush">
-          <h2>Today&rsquo;s diary</h2>
-          {todaysAppointments.length === 0 ? (
+          <h2>Sessions today ({attending.length})</h2>
+          {attending.length === 0 ? (
             <p className="empty">
-              Nothing booked today.{" "}
-              <Link href="/admin/diary">Have a look at the week</Link>.
+              Nothing booked. <Link href="/admin/diary">Look at the week</Link>.
             </p>
           ) : (
             <div className="table-scroll">
@@ -77,20 +140,19 @@ export default function DashboardPage() {
                   <tr>
                     <th>Time</th>
                     <th>Client</th>
-                    <th>Treatment</th>
                     <th>Status</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {todaysAppointments.map((appointment) => (
+                  {attending.map((appointment) => (
                     <tr key={appointment.id}>
                       <td className="num">{formatTime(appointment.startsAt)}</td>
                       <td>
                         <Link href={`/admin/clients/${appointment.clientId}`}>
                           {appointment.clientName}
                         </Link>
+                        <div className="slot-detail">{appointment.treatment}</div>
                       </td>
-                      <td>{appointment.treatment}</td>
                       <td>
                         <span className={`badge badge-${appointment.status}`}>
                           {appointment.status}
@@ -104,72 +166,72 @@ export default function DashboardPage() {
           )}
         </section>
 
-        <section className="panel">
-          <h2>Coming up</h2>
-          {upcoming.length === 0 ? (
-            <p style={{ color: "var(--ink-soft)", margin: 0 }}>
-              Nothing else in the diary yet.
-            </p>
-          ) : (
-            <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-              {upcoming.map((appointment) => (
-                <li key={appointment.id} className="slot" style={{ gridTemplateColumns: "1fr auto" }}>
-                  <div>
-                    <div className="slot-client">{appointment.clientName}</div>
-                    <div className="slot-detail">{appointment.treatment}</div>
-                  </div>
-                  <div style={{ textAlign: "right" }}>
-                    <div className="slot-time">{formatTime(appointment.startsAt)}</div>
-                    <div className="slot-detail">
-                      {formatDateShort(appointment.startsAt)}
-                    </div>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-      </div>
-
-      {outstanding.length > 0 && (
-        <section className="panel panel-flush" style={{ marginTop: "1.5rem" }}>
-          <h2>Waiting to be paid</h2>
-          <div className="table-scroll">
-            <table className="data">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Client</th>
-                  <th>Treatment</th>
-                  <th className="num">Owed</th>
-                </tr>
-              </thead>
-              <tbody>
-                {outstanding.slice(0, 8).map((row) => (
-                  <tr key={row.appointmentId}>
-                    <td>{formatDateShort(row.startsAt)}</td>
-                    <td>
-                      <Link href={`/admin/clients/${row.clientId}`}>
-                        {row.clientName}
-                      </Link>
-                    </td>
-                    <td>{row.treatment}</td>
-                    <td className="num">
-                      <span className="badge badge-owed">
-                        {formatMoney(row.owedPence)}
-                      </span>
-                    </td>
-                  </tr>
+        <div style={{ display: "grid", gap: "1.5rem", alignContent: "start" }}>
+          {away.length > 0 && (
+            <section className="panel">
+              <h2>Away today</h2>
+              <ul className="detail-list" style={{ marginTop: "0.5rem" }}>
+                {away.map((absence) => (
+                  <li key={absence.id}>
+                    <span>{absence.userName}</span>
+                    <span className="muted">
+                      {absence.reason ?? "Away"} · until{" "}
+                      {formatDateShort(absence.endsOn)}
+                    </span>
+                  </li>
                 ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )}
+              </ul>
+            </section>
+          )}
 
-      <p style={{ marginTop: "2rem", color: "var(--ink-soft)", fontSize: "0.9rem" }}>
-        {clients.length} active {clients.length === 1 ? "client" : "clients"} on file.
-      </p>
+          {cancelled.length > 0 && (
+            <section className="panel">
+              <h2>Cancelled today ({cancelled.length})</h2>
+              <ul className="detail-list" style={{ marginTop: "0.5rem" }}>
+                {cancelled.map((appointment) => (
+                  <li key={appointment.id}>
+                    <span>{appointment.clientName}</span>
+                    <span className="muted">
+                      {formatTime(appointment.startsAt)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {dueToday.length > 0 && (
+            <section className="panel">
+              <h2>Due today ({dueToday.length})</h2>
+              <ul className="tick-list" style={{ marginTop: "0.5rem" }}>
+                {dueToday.slice(0, 6).map((task) => (
+                  <li key={task.id}>
+                    {task.title}
+                    <span style={{ color: "var(--ink-soft)" }}>
+                      {" "}
+                      — {task.assigneeName ?? "unassigned"}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {owed > 0 && (
+            <section className="panel">
+              <h2>Waiting to be paid</h2>
+              <p className="stat-value" style={{ fontSize: "1.6rem" }}>
+                {formatMoney(owed)}
+              </p>
+              <p className="stat-note">
+                across {outstanding.length}{" "}
+                {outstanding.length === 1 ? "appointment" : "appointments"} ·{" "}
+                <Link href="/admin/payments">Open payments</Link>
+              </p>
+            </section>
+          )}
+        </div>
+      </div>
     </>
   );
 }
