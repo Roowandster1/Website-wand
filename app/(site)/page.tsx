@@ -1,4 +1,5 @@
 import Link from "next/link";
+import StructuredData from "@/components/StructuredData";
 import {
   about,
   areasOfCounselling,
@@ -29,6 +30,8 @@ import {
 export default function HomePage() {
   return (
     <>
+      <StructuredData />
+
       {/* ---------------------------------------------------------------- 2
           Hero. One headline on a controlled measure, her own opening line, the
           two ways to reach her — and the three facts people look for first in a

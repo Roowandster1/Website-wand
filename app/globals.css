@@ -548,6 +548,33 @@ img {
   margin-top: 0;
 }
 
+/* Running text with headings and lists in it — the privacy notice, mostly.
+   Hanging bullets so the left edge of the text stays on the page's axis. */
+.site-root .prose-wide h2 {
+  margin-top: 2.75rem;
+}
+
+.site-root .prose-wide h2:first-child {
+  margin-top: 0;
+}
+
+.site-root .prose ul,
+.site-root .prose-wide ul {
+  margin: 0 0 1.1em;
+  padding-left: 1.15rem;
+}
+
+.site-root .prose li,
+.site-root .prose-wide li {
+  margin-bottom: 0.55em;
+  padding-left: 0.35rem;
+}
+
+.site-root .prose li::marker,
+.site-root .prose-wide li::marker {
+  color: var(--sage);
+}
+
 .site-root .fine {
   font-size: 0.875rem;
   line-height: 1.55;

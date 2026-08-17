@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { contact, treatments } from "@/content/site";
 
@@ -139,8 +140,11 @@ export default function ContactForm() {
         </button>
       </div>
 
+      {/* The ICO expects the notice to be reachable at the point the data is
+          collected, which is here rather than only in the footer. */}
       <p className="form-note">
-        Your details are only ever used to reply to this enquiry.
+        Your details are only ever used to reply to this enquiry.{" "}
+        <Link href="/privacy">How I look after your information</Link>.
       </p>
     </form>
   );

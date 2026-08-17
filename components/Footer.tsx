@@ -52,6 +52,11 @@ export default function Footer() {
                   <Link href={item.href}>{item.label}</Link>
                 </li>
               ))}
+              {/* Kept out of the main navigation — nobody browses a privacy
+                  notice — but on every page, which is where it has to be. */}
+              <li>
+                <Link href="/privacy">Privacy notice</Link>
+              </li>
             </ul>
           </div>
         </div>

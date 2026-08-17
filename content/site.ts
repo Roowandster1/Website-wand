@@ -384,6 +384,43 @@ export const faqs: Array<{ question: string; answer: string[] }> = [
   },
 ];
 
+/**
+ * The handful of facts the privacy notice needs that nobody can decide but
+ * Elizabeth. The wording of the notice itself lives in the privacy page; these
+ * are the bits that are hers to set, and the page shows a visible warning while
+ * any of them are still blank.
+ *
+ * None of these are guesses. A privacy notice that states a retention period
+ * she does not actually keep to is worse than no notice at all, so they are
+ * empty until she says.
+ */
+export const privacy = {
+  /**
+   * How long client records are kept after the last session.
+   *
+   * ‹‹ CHECK ›› Her insurer's policy wording will state a minimum, and that
+   * minimum is the answer. For counselling in the UK it is commonly 7 years for
+   * adults; for anyone seen under 18 it is usually until their 25th birthday.
+   * Ask the insurer, then write what they say — e.g. "7 years".
+   */
+  retentionAdults: "",
+  retentionUnder18: "",
+
+  /**
+   * Her ICO registration (data protection fee) number.
+   *
+   * ‹‹ CHECK ›› Holding health records on a computer means she almost certainly
+   * needs to be registered with the Information Commissioner's Office and pay
+   * the annual fee — it is £40–£60 for a practice this size. Check and register
+   * at https://ico.org.uk/registration/ then put the reference here. Leave it
+   * empty and the notice simply doesn't mention a number.
+   */
+  icoRegistration: "",
+
+  /** The date the notice was last changed. Update it when you change the text. */
+  lastUpdated: "",
+};
+
 /** The main menu. Order here = order in the header. */
 export const nav = [
   { label: "Home", href: "/" },
