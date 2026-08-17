@@ -179,6 +179,42 @@ for something of this size.
 Back up the volume as well as taking in-app exports — they protect against
 different things.
 
+### Railway, step by step
+
+`railway.json` is committed and tells Railway to build from the `Dockerfile`
+rather than guess. **Do all four of these** — three of them are the usual causes
+of a failed deploy:
+
+1. **Add a volume.** Railway → your service → *Variables* → *New Volume*, mount
+   path `/data`. Without it the app still starts, but every client record
+   vanishes on the next deploy or restart.
+2. **Set the secrets** under *Variables*:
+   ```
+   DATA_ENCRYPTION_KEY   (32 random bytes, base64 — see .env.example)
+   BACKUP_PASSPHRASE     (12+ characters, for the nightly backup)
+   ```
+   `DATABASE_PATH` and `BACKUP_DIR` already default to `/data` in the Dockerfile.
+3. **Leave `PORT` alone.** Railway injects it; the container binds to it on
+   `0.0.0.0`. Overriding it usually breaks the healthcheck.
+4. **Generate a domain** (*Settings* → *Networking*). Railway gives you HTTPS,
+   which the app needs — session cookies are `Secure` in production and will not
+   be sent over plain HTTP.
+
+**If the deploy fails, read the log for which stage broke:**
+
+| Symptom in the log | Cause | Fix |
+| --- | --- | --- |
+| `Unsupported engine` / Node version error | Builder picked an old Node | `engines` and `.nvmrc` now pin ≥20.9 — redeploy |
+| `gyp` / `node-gyp` / `better-sqlite3` build error | Native module compiled without a toolchain | Make sure it's building from the `Dockerfile`, not Nixpacks |
+| Healthcheck timeout, app otherwise fine | Healthcheck hitting a redirect | Path must be `/api/health/` **with** the trailing slash |
+| `{"status":"not ready","problems":[...]}` | App started but is misconfigured | The `problems` list names exactly what's missing |
+| Deploy succeeds, data disappears later | No volume attached | Add the `/data` volume (step 1) |
+
+`GET /api/health/` is a readiness check that fails the deploy rather than
+letting a misconfigured app take traffic. It confirms the database is writable
+and the encryption key is present and valid, and returns the reason when either
+isn't. It never returns client data.
+
 ---
 
 ## Security and the law
