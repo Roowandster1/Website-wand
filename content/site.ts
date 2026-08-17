@@ -4,153 +4,338 @@
  * ─────────────────────────────────────────────────────────────────────────────
  *
  *  Edit the text between the 'quote marks', save, and the site updates.
- *  You do not need to touch any other file to change words, prices or photos.
+ *  You do not need to touch any other file to change words or fees.
  *
- *  Anything marked  ‹‹ CHANGE ME ››  is a placeholder I invented so the site
- *  had something to show. Swap it for the real details before going live.
+ *  The wording here is Elizabeth's own, taken from her existing profile, kept
+ *  close to how she wrote it. It is her voice and it is good — it has not been
+ *  "improved".
+ *
+ *  Anything still marked  ‹‹ CHECK ››  needs confirming before going live.
  */
 
 export const site = {
-  /** Business name. Shows in the header, the browser tab and the footer. */
-  name: "Willow & Thyme", // ‹‹ CHANGE ME ››
-  /** One line under the name. Keep it short — it sits in the header. */
-  tagline: "Holistic therapies in the heart of the village", // ‹‹ CHANGE ME ››
-  /** Used by Google and when the link is shared on WhatsApp or Facebook. */
+  name: "Elizabeth Wand",
+  /** Shown under her name. Her actual post-nominals, exactly as she lists them. */
+  credentials: "BA (Hons) Counselling · MBACP (Accred)",
+  tagline: "Person-centred counselling for adults",
   description:
-    "Gentle, unhurried holistic therapy — massage, reflexology and aromatherapy — in a calm home studio. Book a treatment today.",
-  /** Set this once the site has a real web address, e.g. "https://willowandthyme.co.uk" */
-  url: "https://example.com", // ‹‹ CHANGE ME ››
+    "Elizabeth Wand, BACP-accredited counsellor in London E4 and E17. " +
+    "Person-centred counselling for adults, in person, online or by phone. " +
+    "Experienced in working with ADHD, autism and AuDHD. £60 per 50-minute session.",
+  /** Set this once the site has its own web address. */
+  url: "https://example.com", // ‹‹ CHECK ›› replace with the real address
+};
+
+/**
+ * Whether she is taking on new clients.
+ *
+ * Her directory profile currently says "waiting list for new clients". Saying so
+ * plainly is kinder than letting someone write a difficult first email and then
+ * wait — and it costs nothing, because people who are willing to wait still get
+ * in touch. Set `open: true` when she has space again.
+ */
+export const availability = {
+  open: false,
+  waitingListMessage:
+    "I have a waiting list for new clients at the moment. Do still get in " +
+    "touch — I'll let you know roughly how long the wait is likely to be, and " +
+    "we can arrange an initial call when a space comes up.",
+  /** How her working week generally looks. */
+  hours:
+    "Weekdays and weekends, from early morning through to the evening. " +
+    "Get in touch and we'll find a time that works.",
 };
 
 export const contact = {
-  email: "hello@willowandthyme.co.uk", // ‹‹ CHANGE ME ››
-  /** Written how you'd say it out loud. */
-  phone: "01234 567 890", // ‹‹ CHANGE ME ››
-  /** Digits only, with country code — this is what a phone actually dials. */
-  phoneLink: "+441234567890", // ‹‹ CHANGE ME ››
-  /** Rough location is fine. Don't publish a home address you'd rather keep private. */
-  location: "Home studio, Little Marlow, Buckinghamshire", // ‹‹ CHANGE ME ››
-  /** Leave a link as an empty string ("") and it disappears from the site. */
+  phone: "07907 161 378",
+  phoneLink: "+447907161378",
+  /** She takes calls and texts on the same number. */
+  acceptsText: true,
+  email: "hello@example.com", // ‹‹ CHECK ›› her real email address is needed
+  /** Partial postcodes only, which is what she publishes. */
+  locations: ["London E4", "London E17"],
+  /** Leave a link as "" and it disappears from the site. */
   facebook: "",
   instagram: "",
   /**
-   * The contact form needs somewhere to send messages. Until you set this up,
-   * the form opens her email app with the message pre-written — which works
-   * fine, and costs nothing.
-   *
-   * To get proper emailed submissions instead: make a free form at
-   * https://formspree.io, then paste the URL it gives you in here.
+   * The enquiry form needs somewhere to send messages. Until this is set, the
+   * form opens the visitor's own email app with the message written out.
+   * A free form at https://formspree.io gives you a URL to paste here.
    */
   formEndpoint: "",
 };
 
-/** The opening hours table on the contact page. */
-export const hours = [
-  { day: "Monday", time: "9am – 5pm" },
-  { day: "Tuesday", time: "9am – 5pm" },
-  { day: "Wednesday", time: "9am – 8pm" },
-  { day: "Thursday", time: "9am – 5pm" },
-  { day: "Friday", time: "9am – 3pm" },
-  { day: "Saturday", time: "10am – 2pm" },
-  { day: "Sunday", time: "Closed" },
+/** How sessions can happen. */
+export const sessionTypes = [
+  { label: "In person", detail: "At the London E4 or E17 rooms" },
+  { label: "Online", detail: "Zoom, Microsoft Teams or FaceTime" },
+  { label: "By phone", detail: "If you would rather not be on camera" },
 ];
 
-/**
- * The treatments she offers.
- *
- * Add one by copying a whole { ... } block and changing the words.
- * Remove one by deleting its { ... } block. Order here = order on the page.
- */
-export const treatments = [
-  {
-    slug: "swedish-massage",
-    name: "Swedish Massage",
-    duration: "60 or 90 minutes",
-    price: "£45 / £65",
-    summary:
-      "Slow, flowing strokes to ease tired muscles and quieten a busy mind.",
-    description:
-      "The treatment most people picture when they think of massage, and a lovely place to start if you've never had one. I work at a steady, unhurried pace, easing out the knots that build up across the shoulders and lower back. Pressure is entirely up to you — just say, at any point, and I'll adjust.",
-    good_for: ["Tension across the neck and shoulders", "Trouble sleeping", "General aches after a long week"],
-  },
-  {
-    slug: "reflexology",
-    name: "Reflexology",
-    duration: "50 minutes",
-    price: "£40",
-    summary:
-      "Focused pressure on the feet, working through the whole body from the ankles down.",
-    description:
-      "You stay fully clothed apart from your shoes and socks, settled back in a reclining chair with a blanket. I work methodically over the soles, heels and toes. Most people find it every bit as relaxing as a full body massage, and it's a good choice if being on a couch doesn't appeal.",
-    good_for: ["Sluggish digestion", "Swollen or tired feet", "Anyone who'd rather stay clothed"],
-  },
-  {
-    slug: "aromatherapy",
-    name: "Aromatherapy Massage",
-    duration: "75 minutes",
-    price: "£55",
-    summary:
-      "A massage with essential oils blended for you on the day.",
-    description:
-      "We start with a chat about how you've been feeling, and I blend a handful of essential oils to suit — lavender and camomile when rest is what's needed, rosemary and grapefruit when it's a lift. The blend goes into a warmed carrier oil, and the massage itself is slow and covering.",
-    good_for: ["Low mood or feeling frazzled", "Winding down before a big week", "A treat that lasts"],
-  },
-  {
-    slug: "indian-head-massage",
-    name: "Indian Head Massage",
-    duration: "30 minutes",
-    price: "£28",
-    summary:
-      "Scalp, neck and shoulders — short, seated, and no oils unless you'd like them.",
-    description:
-      "Thirty minutes, sitting up, with the option to skip oils entirely so you can head straight back out. I work up through the upper back and shoulders into the scalp. It's the one people book on a lunch break and then come back for properly.",
-    good_for: ["Headaches from screens", "A quick reset mid-week", "Tight jaw and temples"],
-  },
+export const fees = {
+  amount: "£60",
+  per: "50-minute session",
+  /** How long a session runs, written out on its own for use in sentences. */
+  duration: "50 minutes",
+  note:
+    "Sessions are one to one, either for a set number of weeks or open-ended, " +
+    "depending on what you need.",
+  /** Health insurers and employee assistance programmes she works with. */
+  insurers: ["Aviva", "Axa Health", "Vitality", "BUPA"],
+};
+
+/** Who she works with. */
+export const clientGroups = [
+  "Young adults (18–24)",
+  "Adults (25–64)",
+  "Older adults (65+)",
 ];
 
-/**
- * Real words from real clients, used with their permission.
- * Ask before you publish anyone — and first names only is plenty.
- */
-export const testimonials = [
-  {
-    quote:
-      "I've had a lot of massages over the years and never one where I felt so genuinely looked after. I came out feeling about a foot taller.",
-    author: "Marion, Marlow", // ‹‹ CHANGE ME ››
-  },
-  {
-    quote:
-      "She spotted where I was holding tension before I'd even said anything. Three sessions in and the headaches I'd had for months have all but gone.",
-    author: "Priya, High Wycombe", // ‹‹ CHANGE ME ››
-  },
-  {
-    quote:
-      "The room is so warm and calm you forget you're in someone's house. I book the next one before I leave.",
-    author: "Tom, Bourne End", // ‹‹ CHANGE ME ››
-  },
-];
-
-/** The About page. Each string is one paragraph. */
+/** Her own words about the work. Each string is one paragraph. */
 export const about = {
-  heading: "Hello, I'm Anne", // ‹‹ CHANGE ME ››
+  heading: "Hello, I'm Elizabeth",
+  intro:
+    "I'm a fully qualified and widely experienced BACP-accredited counsellor " +
+    "offering counselling to adults.",
   paragraphs: [
-    "I've been practising holistic therapies for over fifteen years, the last eight of them from a small studio at the back of my house. Before that I spent a long time in nursing, which is where I first noticed how much of what people carry physically is really something else entirely.", // ‹‹ CHANGE ME ››
-    "My approach is unhurried. Appointments are spaced so nobody is rushed out of the door, and there's always time for a cup of tea afterwards if you'd like one. I'd far rather see four people properly in a day than eight in a hurry.",
-    "The studio is warm, quiet and on the ground floor, with parking directly outside. If you have limited mobility, are pregnant, or are going through treatment for anything, please do ring and talk it through with me first — there's nearly always a way to adapt a treatment so it works for you.",
+    "Life can sometimes feel overwhelming, stuck, or difficult, and we may need support to get through these times. It can be hard to speak to those close to us. You might want to be heard, need help understanding your emotions, or seek support for past or present challenges.",
+    "I provide a safe, confidential space where you can explore your experiences without judgment. My approach is warm, collaborative, and centred on building a trusting relationship.",
+    "Therapy can help you understand yourself, your patterns of behaviour, and your relationships. It can help you heal from past experiences and, in turn, develop coping strategies and build resilience. You are not alone in this process, and together we can work towards a sense of well-being and greater satisfaction in your life.",
+    "I have a lot of experience in working with individuals from diverse backgrounds and lived experiences. I also have considerable experience working with those who are neurodivergent or navigating a related diagnosis of ADHD, Autism, or AuDHD.",
+    "I offer one-on-one sessions, either for a set period or on an open-ended basis, depending on your needs.",
   ],
-  /** Qualifications and memberships. Delete any that don't apply. */
-  credentials: [
-    "ITEC Diploma in Holistic Massage", // ‹‹ CHANGE ME ››
-    "Level 3 Diploma in Reflexology",
-    "Certified Aromatherapist, IFPA",
-    "Fully insured · Enhanced DBS checked",
+};
+
+/** Training and background, in her words. */
+export const qualifications = {
+  paragraphs: [
+    "I hold a First-class BA (Hons) in Person-Centred Counselling from Metanoia Institute / Middlesex University, along with a Clinical Diploma in Person-Centred Counselling from Metanoia Institute. I also have a Certificate in Supervision from Metanoia Institute in London, and have completed Level 2 training in Acceptance & Commitment Therapy (ACT) with APT.",
+    "With over 10 years of counselling experience, I have worked in various settings, including the NHS, hospice, community services, a university counselling service, and private practice. During the Covid-19 pandemic in London, I provided counselling to NHS staff and bereaved clients during a challenging and unprecedented time.",
+    "In addition to my private practice, I currently work as a supervisor for a Schools Counselling Service, supporting the professional development of other counsellors.",
   ],
+  memberships: [
+    {
+      name: "British Association for Counselling & Psychotherapy",
+      detail: "Accredited register membership (MBACP Accred)",
+    },
+  ],
+  /** Shown as short reassurance items. */
+  assurances: ["BACP accredited", "DBS checked", "Over 10 years' experience"],
+};
+
+/** The approaches she draws on. */
+export const therapies = [
+  {
+    name: "Person-centred therapy",
+    detail:
+      "The foundation of how I work: you lead, and I follow — no assumptions about what your experience means.",
+  },
+  {
+    name: "Integrative counselling",
+    detail: "Drawing on more than one approach, shaped around what helps you.",
+  },
+  {
+    name: "Relational therapy",
+    detail:
+      "Paying attention to what happens between us, because relationships are often where difficulty shows itself.",
+  },
+  {
+    name: "Humanistic therapies",
+    detail: "Starting from the view that you already hold what you need to grow.",
+  },
+  {
+    name: "Acceptance and Commitment Therapy (ACT)",
+    detail:
+      "Practical work on living alongside difficult thoughts and feelings rather than fighting them.",
+  },
+];
+
+/**
+ * Her particular area of experience. Given a prominent place of its own because
+ * it is the thing people most often search for, and the hardest to find someone
+ * genuinely experienced in.
+ */
+export const neurodivergence = {
+  heading: "Neurodivergence",
+  paragraphs: [
+    "I enjoy working with individuals exploring or living with ADHD, autism, dyspraxia, and dyslexia. Over the years, I have supported many clients in navigating the unique challenges these aspects of life present, from the impact on daily life to the complexities of personal, social, and professional relationships.",
+  ],
+  /**
+   * A clear, honest boundary. Left in deliberately — people looking for an
+   * assessment need to know quickly that this is not that, and saying so builds
+   * more trust than leaving it vague.
+   */
+  boundary:
+    "While I cannot formally diagnose or assess, I bring an understanding and " +
+    "a depth of experience in helping individuals manage and thrive in their lives.",
+};
+
+/**
+ * What she works with. Grouped rather than listed as sixty ticks in a column —
+ * an undifferentiated wall is hard to scan, and someone arriving in distress is
+ * looking for one word.
+ */
+export const areasOfCounselling: Array<{ group: string; items: string[] }> = [
+  {
+    group: "Feeling low, anxious or overwhelmed",
+    items: [
+      "Anxiety",
+      "Depression",
+      "Feeling sad",
+      "Stress",
+      "Burnout",
+      "Loneliness",
+      "Health anxiety",
+      "Social anxiety",
+      "Seasonal affective disorder (SAD)",
+      "Obsessive compulsive disorder (OCD)",
+      "Suicidal thoughts",
+      "Self-harm",
+      "Mental health",
+    ],
+  },
+  {
+    group: "Neurodivergence and learning",
+    items: [
+      "ADHD",
+      "Autism",
+      "Neurodiversity",
+      "Dyslexia",
+      "Dyspraxia",
+      "High sensitivity",
+      "Learning difficulties",
+      "Learning disabilities",
+    ],
+  },
+  {
+    group: "Loss and bereavement",
+    items: [
+      "Bereavement",
+      "Baby loss",
+      "Miscarriage",
+      "Abortion",
+      "Pregnancy and birth",
+      "Postnatal depression",
+      "Cancer",
+      "Carer support",
+    ],
+  },
+  {
+    group: "Trauma and abuse",
+    items: [
+      "Trauma",
+      "Post-traumatic stress disorder (PTSD)",
+      "Abuse",
+      "Physical abuse",
+      "Sexual assault",
+      "Narcissistic abuse",
+      "Bullying",
+      "Attachment disorder",
+    ],
+  },
+  {
+    group: "Relationships and family",
+    items: [
+      "Relationship problems",
+      "Family issues",
+      "Separation and divorce",
+      "Affairs and betrayals",
+      "Non-monogamy",
+      "Jealousy",
+      "Behaviour problems",
+      "Anger management",
+    ],
+  },
+  {
+    group: "Identity and belonging",
+    items: [
+      "LGBTQ+ counselling",
+      "Race and racial identity",
+      "Racism",
+      "Spirituality",
+      "Low self-esteem",
+      "Low self-confidence",
+      "Perfectionism",
+    ],
+  },
+  {
+    group: "Work, money and life stages",
+    items: [
+      "Work-related stress",
+      "Career counselling",
+      "Redundancy",
+      "Money",
+      "Menopause",
+      "Addiction",
+      "Older people's counselling",
+      "Young people's counselling",
+    ],
+  },
+];
+
+/** A separate service, for qualified counsellors rather than clients. */
+export const supervision = {
+  heading: "Supervision for counsellors",
+  body:
+    "I offer clinical supervision in person and online, and I'm experienced in " +
+    "supporting counsellors and therapists to develop a private practice.",
+  detail: "Person-centred counsellor and supervisor.",
 };
 
 /** The main menu. Order here = order in the header. */
 export const nav = [
   { label: "Home", href: "/" },
-  { label: "Treatments", href: "/treatments" },
+  { label: "How I work", href: "/how-i-work" },
   { label: "About", href: "/about" },
   { label: "Contact", href: "/contact" },
+];
+
+/**
+ * Session types for the admin diary.
+ *
+ * Kept in the same shape the diary already expects, so booking a session offers
+ * these rather than a list of massages.
+ */
+export const treatments = [
+  {
+    slug: "counselling",
+    name: "Counselling session",
+    duration: "50 minutes",
+    price: "£60",
+    summary: "One-to-one counselling, in person, online or by phone.",
+    description:
+      "A standard 50-minute one-to-one session, either for a set number of weeks or open-ended.",
+    good_for: ["Individual work"],
+  },
+  {
+    slug: "initial-call",
+    name: "Initial call",
+    duration: "20 minutes",
+    price: "£0",
+    summary: "A short first conversation, at no charge.",
+    description:
+      "A chance to talk briefly about what you're looking for and whether working together feels right.",
+    good_for: ["First contact"],
+  },
+  {
+    slug: "supervision",
+    name: "Supervision",
+    duration: "60 minutes",
+    price: "£60",
+    summary: "Clinical supervision for qualified counsellors.",
+    description:
+      "Supervision in person or online, including support for counsellors building a private practice.",
+    good_for: ["Counsellors and therapists"],
+  },
+];
+
+/** Opening hours, used by the admin dashboard and the footer. */
+export const hours = [
+  { day: "Monday", time: "Morning – evening" },
+  { day: "Tuesday", time: "Morning – evening" },
+  { day: "Wednesday", time: "Morning – evening" },
+  { day: "Thursday", time: "Morning – evening" },
+  { day: "Friday", time: "Morning – evening" },
+  { day: "Saturday", time: "By arrangement" },
+  { day: "Sunday", time: "By arrangement" },
 ];

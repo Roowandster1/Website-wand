@@ -25,7 +25,7 @@ export default function ContactForm() {
     const name = String(data.get("name") ?? "");
     const email = String(data.get("email") ?? "");
     const phone = String(data.get("phone") ?? "");
-    const treatment = String(data.get("treatment") ?? "");
+    const enquiryAbout = String(data.get("about") ?? "");
     const message = String(data.get("message") ?? "");
 
     // No form service configured yet: fall back to opening the visitor's own
@@ -35,7 +35,7 @@ export default function ContactForm() {
         `Name: ${name}`,
         `Email: ${email}`,
         phone && `Phone: ${phone}`,
-        treatment && `Treatment: ${treatment}`,
+        enquiryAbout && `About: ${enquiryAbout}`,
         "",
         message,
       ]
@@ -98,8 +98,8 @@ export default function ContactForm() {
       </div>
 
       <div className="field">
-        <label htmlFor="treatment">Which treatment are you interested in?</label>
-        <select id="treatment" name="treatment" defaultValue="">
+        <label htmlFor="about">What are you getting in touch about?</label>
+        <select id="about" name="about" defaultValue="">
           <option value="">I&rsquo;m not sure yet</option>
           {treatments.map((t) => (
             <option key={t.slug} value={t.name}>
@@ -115,7 +115,7 @@ export default function ContactForm() {
           id="message"
           name="message"
           required
-          placeholder="Let me know roughly when suits you, and anything you'd like me to know beforehand."
+          placeholder="A sentence or two is plenty. It helps to know roughly what times of day suit you."
         />
       </div>
 

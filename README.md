@@ -1,17 +1,18 @@
-# Willow & Thyme
+# Elizabeth Wand — Counselling
 
 Two things in one project:
 
-1. **A public website** — home, treatments, about and contact.
-2. **A private admin dashboard** at `/admin` — clients, diary, treatment notes,
+1. **A public website** — home, how I work, about and contact.
+2. **A private admin dashboard** at `/admin` — clients, diary, session notes,
    payments and encrypted backups.
 
 Built with Next.js and SQLite. One app, one deploy, one file to back up.
 
-> **Everything in here is placeholder.** The business name, the therapist, the
-> treatments, the prices and all three testimonials are invented. Anything
-> marked `‹‹ CHANGE ME ››` in `content/site.ts` needs replacing before this is
-> shown to anyone.
+> **Two things still need filling in before this goes live.** Search
+> `content/site.ts` for `‹‹ CHECK ››`: the site's real web address (`site.url`)
+> and Elizabeth's email address (`contact.email`). Everything else is her own
+> wording, taken from her existing profile. Search engines stay blocked until
+> `NEXT_PUBLIC_ALLOW_INDEXING=1` is set, so an unfinished page can't get indexed.
 
 ---
 
@@ -22,15 +23,26 @@ Edit the text between the `'quote marks'`, save, and the site updates.
 
 | What to change | Where |
 | --- | --- |
-| Business name, tagline | `site` |
-| Phone, email, address, socials | `contact` |
-| Opening hours | `hours` |
-| Treatments, prices, descriptions | `treatments` |
-| Client quotes | `testimonials` |
-| About page and qualifications | `about` |
+| Name, credentials, tagline | `site` |
+| Taking new clients, or on a waiting list | `availability` |
+| Phone, email, areas, socials | `contact` |
+| Fee, session length, insurers | `fees` |
+| In person / online / phone | `sessionTypes` |
+| The "About" wording | `about` |
+| Training, memberships, DBS | `qualifications` |
+| Approaches drawn on | `therapies` |
+| The neurodivergence section | `neurodivergence` |
+| The list of things worked with | `areasOfCounselling` |
+| Supervision for other counsellors | `supervision` |
+| Session types offered in the diary | `treatments` |
 
-The treatments listed there also become the options in the booking form, so the
-diary and the website can't drift apart.
+Two of those do more than print words:
+
+- **`availability.open`** — set it to `false` and a waiting-list notice appears on
+  the home, how-I-work and contact pages. Set it to `true` when there's space
+  again and the notices disappear on their own.
+- **`treatments`** — these become the options in the enquiry form *and* in the
+  admin diary, so the website and the diary can't drift apart.
 
 ### The contact form
 
@@ -51,7 +63,7 @@ setup page seals itself and cannot be used again.
 - **Diary** — week view, booking, recurring appointments, double-booking prevention
 - **Clients** — records, health information, treatment notes, consent, archiving
 - **Payments** — what's been paid, what's outstanding, yearly totals
-- **Insights** — which treatments earn most, who's drifted away, website visitors
+- **Reports** — what earns most, who's drifted away, website visitors
 - **Settings** — two-factor authentication, password, backups, activity log
 
 ### Two things to do on day one
@@ -125,7 +137,7 @@ There is **no Google Analytics and no third-party script**. Views are counted
 by the site's own server into the same database, with no cookies, no IP
 addresses and nothing that could identify a person or link two visits. That's
 what keeps it outside the consent rules — and it's still enough to answer "is
-anyone actually reading the treatments page?".
+anyone actually reading the how-I-work page?".
 
 The honest limitation: with no identifiers there's no true "unique visitors"
 figure. Views are views. Obvious bots are filtered out; Do Not Track is

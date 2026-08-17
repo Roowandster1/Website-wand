@@ -125,8 +125,12 @@ export async function sendTomorrowsReminders(): Promise<ReminderOutcome> {
 }
 
 /**
- * The message body. Deliberately says when and where, and nothing about what —
- * no treatment name, no reason for the visit.
+ * The message body. Deliberately says when, and nothing about what — no session
+ * type, no reason for the appointment.
+ *
+ * It doesn't say where either. Sessions happen in two different rooms, online
+ * and by phone, and the diary doesn't record which; guessing would be worse than
+ * silent, and the client already knows.
  */
 function buildMessage(appointment: Due): string {
   return [
@@ -134,9 +138,7 @@ function buildMessage(appointment: Due): string {
     "",
     `Just a reminder about your appointment tomorrow, ${formatDate(
       appointment.starts_at,
-    )} at ${formatTime(appointment.starts_at)}.`,
-    "",
-    contact.location ? `Where: ${contact.location}` : "",
+    )} at ${formatTime(appointment.starts_at)}, as arranged.`,
     "",
     `If you need to change or cancel it, please ring ${contact.phone} — as much notice as you can manage is much appreciated.`,
     "",

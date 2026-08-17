@@ -1,22 +1,26 @@
 /* ---------------------------------------------------------------------------
    Design tokens. Change a colour here and it changes everywhere on the site.
+
+   A calm linen ground with a deep teal accent. Counselling wants steadiness
+   rather than warmth-as-sales: the ground stays soft and human, and the accent
+   is quiet enough to sit behind difficult reading without shouting.
    --------------------------------------------------------------------------- */
 
 :root {
   color-scheme: light;
 
-  --cream: #fdf9f3;
-  --cream-deep: #f6ede0;
-  --paper: #fffdfa;
-  --ink: #3a322b;
-  --ink-soft: #6f6357;
-  --line: #e8dccb;
+  --cream: #faf8f4;
+  --cream-deep: #f0ece5;
+  --paper: #ffffff;
+  --ink: #2a322f;
+  --ink-soft: #5b6763;
+  --line: #e2ded6;
 
-  --clay: #a8613f;
-  --clay-dark: #8c4e30;
-  --clay-wash: #f4e4d9;
-  --sage: #7d8f72;
-  --sage-wash: #eaefe5;
+  --clay: #2f6b60;
+  --clay-dark: #24544b;
+  --clay-wash: #e4efeb;
+  --sage: #6f8a7f;
+  --sage-wash: #e9f0ec;
 
   --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia,
     "Times New Roman", serif;
@@ -185,10 +189,13 @@ img {
   color: #fff;
 }
 
+/* A paper background rather than transparent: these buttons sit on the cream
+   hero, the white sections and the tinted bands, and a transparent pill with a
+   pale border disappears on the tinted ones. */
 .btn-secondary {
-  background: transparent;
+  background: var(--paper);
   color: var(--ink);
-  border-color: var(--line);
+  border-color: #cfc9bf;
 }
 .btn-secondary:hover {
   background: var(--paper);
@@ -484,6 +491,18 @@ img {
   color: var(--ink-soft);
 }
 
+/* Some rows are a label and a sentence rather than a label and a short value.
+   Pushing a sentence to the right-hand edge leaves it ragged, so these stack. */
+.detail-list.stacked li {
+  display: grid;
+  gap: 0.15rem;
+  justify-items: start;
+}
+
+.detail-list.stacked li .muted {
+  text-align: left;
+}
+
 .tick-list {
   list-style: none;
   padding: 0;
@@ -562,8 +581,124 @@ img {
 }
 
 .form-status[data-tone="error"] {
-  background: var(--clay-wash);
-  border-color: #e3c4b1;
+  background: #fdf1e7;
+  border-color: #e8c9ac;
+}
+
+/* --- Notice -----------------------------------------------------------------
+   Used for the waiting-list message. Deliberately calm rather than alarming:
+   this is information someone needs before they write a difficult first email,
+   not a warning. */
+
+.notice {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--sage);
+  border-radius: var(--radius);
+  padding: 1.25rem 1.5rem;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.notice h2,
+.notice h3 {
+  font-family: var(--sans);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--sage);
+  margin: 0;
+}
+
+.notice p {
+  margin: 0;
+  color: var(--ink-soft);
+}
+
+/* --- Grouped word lists ----------------------------------------------------
+   Sixty things she works with, in seven named groups. An undifferentiated
+   column of sixty is unreadable; someone arriving in distress is scanning for
+   one word, so the group heading does the finding for them. */
+
+.areas {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr));
+  margin-top: 2.5rem;
+}
+
+.area-group {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  min-width: 0;
+}
+
+.area-group h3 {
+  font-family: var(--sans);
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.9rem;
+}
+
+/* One flowing line of words rather than sixty separate elements. Chips would
+   turn this into sixty buttons that don't do anything, and a flex row leaves
+   separators dangling at the end of wrapped lines — so it's plain text, with a
+   non-breaking space tying each separator to the word in front of it. */
+.word-list {
+  margin: 0;
+  font-size: 0.94rem;
+  line-height: 1.8;
+  color: var(--ink-soft);
+}
+
+/* --- Reassurance strip ----------------------------------------------------- */
+
+.assurances {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 2rem;
+  justify-content: center;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.assurances li {
+  padding-left: 1.6rem;
+  position: relative;
+}
+
+.assurances li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: var(--sage);
+}
+
+/* --- Fee figure ------------------------------------------------------------ */
+
+.fee {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.fee strong {
+  font-family: var(--serif);
+  font-size: 2.1rem;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.fee span {
+  color: var(--ink-soft);
 }
 
 /* --- Two-column split ------------------------------------------------------ */

@@ -1,5 +1,17 @@
 import Link from "next/link";
-import { about, contact, hours, testimonials, treatments } from "@/content/site";
+import {
+  about,
+  areasOfCounselling,
+  availability,
+  clientGroups,
+  contact,
+  fees,
+  neurodivergence,
+  qualifications,
+  sessionTypes,
+  supervision,
+  therapies,
+} from "@/content/site";
 
 export default function HomePage() {
   return (
@@ -7,40 +19,41 @@ export default function HomePage() {
       <section className="hero">
         <div className="wrap hero-grid">
           <div>
-            <p className="eyebrow">Massage · Reflexology · Aromatherapy</p>
-            <h1>An hour that&rsquo;s genuinely yours</h1>
-            <p className="lede">
-              Unhurried holistic treatments in a warm, quiet home studio — with
-              time for a cup of tea afterwards, and no rushing you out of the
-              door.
+            <p className="eyebrow">
+              Counselling · {contact.locations.join(" & ")} · Online
             </p>
+            <h1>Somewhere to be heard, without judgement</h1>
+            <p className="lede">{about.intro}</p>
             <div className="btn-row">
               <Link className="btn btn-primary" href="/contact">
-                Book a treatment
+                Get in touch
               </Link>
-              <Link className="btn btn-secondary" href="/treatments">
-                See treatments &amp; prices
+              <Link className="btn btn-secondary" href="/how-i-work">
+                How I work
               </Link>
             </div>
             <p className="hero-note">
-              New here? Ring for a chat first — there&rsquo;s no obligation to
-              book.
+              An initial call costs nothing and commits you to nothing. It
+              simply gives us both a chance to see whether working together
+              feels right.
             </p>
           </div>
 
           <div className="hero-panel">
-            <h2>Ring me</h2>
+            <h2>Ring or text me</h2>
             <a className="hero-phone" href={`tel:${contact.phoneLink}`}>
               {contact.phone}
             </a>
             <p style={{ color: "var(--ink-soft)", fontSize: "0.95rem" }}>
-              {contact.location}
+              {contact.acceptsText
+                ? "Calls and texts both welcome."
+                : "Calls welcome."}
             </p>
-            <ul className="detail-list" style={{ marginTop: "1.25rem" }}>
-              {hours.map((entry) => (
-                <li key={entry.day} style={{ padding: "0.45rem 0" }}>
-                  <span>{entry.day}</span>
-                  <span className="muted">{entry.time}</span>
+            <ul className="detail-list stacked" style={{ marginTop: "1.25rem" }}>
+              {sessionTypes.map((type) => (
+                <li key={type.label} style={{ padding: "0.55rem 0" }}>
+                  <span>{type.label}</span>
+                  <span className="muted">{type.detail}</span>
                 </li>
               ))}
             </ul>
@@ -48,101 +61,170 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="section">
-        <div className="wrap">
-          <p className="eyebrow">Treatments</p>
-          <h2>Choose what you need today</h2>
-          <p className="lede" style={{ marginBottom: "2.5rem" }}>
-            Not sure which is right for you? Say so when you get in touch and
-            we&rsquo;ll work it out together.
-          </p>
+      {/* Said plainly and said early. Someone who has worked up the courage to
+          write a first message deserves to know about the wait before they
+          write it, not a fortnight afterwards. */}
+      {!availability.open && (
+        <section className="section" style={{ paddingBottom: 0 }}>
+          <div className="wrap">
+            <div className="notice">
+              <h2>Availability</h2>
+              <p>{availability.waitingListMessage}</p>
+            </div>
+          </div>
+        </section>
+      )}
 
-          <div className="grid grid-pairs">
-            {treatments.map((treatment) => (
-              <article className="card" key={treatment.slug}>
-                <h3>{treatment.name}</h3>
-                <p className="card-meta">
-                  {treatment.duration} · {treatment.price}
-                </p>
-                <p>{treatment.summary}</p>
-              </article>
+      <section className="section">
+        <div className="wrap split">
+          <div className="prose">
+            <p className="eyebrow">How I can help</p>
+            {about.paragraphs.slice(0, 3).map((paragraph, index) => (
+              <p
+                key={index}
+                style={index === 0 ? { fontSize: "1.15rem" } : undefined}
+              >
+                {paragraph}
+              </p>
             ))}
+            <p>
+              <Link href="/about">More about me and my training &rarr;</Link>
+            </p>
           </div>
 
-          <div className="btn-row">
-            <Link className="btn btn-secondary" href="/treatments">
-              Full details and prices
-            </Link>
+          <div className="stack">
+            <div className="card">
+              <h3>Sessions</h3>
+              <div className="fee" style={{ marginTop: "1rem" }}>
+                <strong>{fees.amount}</strong>
+                <span>per {fees.per}</span>
+              </div>
+              <p>{fees.note}</p>
+              <p style={{ fontSize: "0.92rem", color: "var(--ink-soft)" }}>
+                I also work with {fees.insurers.join(", ")}.
+              </p>
+            </div>
+
+            <div className="card">
+              <h3>Who I work with</h3>
+              <ul className="tick-list" style={{ marginTop: "0.85rem" }}>
+                {clientGroups.map((group) => (
+                  <li key={group}>{group}</li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="card">
+              <h3>When</h3>
+              <p style={{ marginTop: "0.85rem" }}>{availability.hours}</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Her deepest area of experience, and the thing people most often search
+          for by name. It gets a section of its own rather than one word inside a
+          list of sixty. */}
+      <section className="section section-tinted">
+        <div className="wrap split">
+          <div>
+            <p className="eyebrow">A particular interest</p>
+            <h2>{neurodivergence.heading}</h2>
+            <div className="prose">
+              {neurodivergence.paragraphs.map((paragraph, index) => (
+                <p key={index}>{paragraph}</p>
+              ))}
+            </div>
+          </div>
+
+          <div className="notice">
+            <h3>Worth saying plainly</h3>
+            <p>{neurodivergence.boundary}</p>
+          </div>
+        </div>
+      </section>
+
+      <section className="section">
+        <div className="wrap">
+          <p className="eyebrow">What people bring</p>
+          <h2>Things I work with</h2>
+          <p className="lede">
+            You don&rsquo;t need to find your feeling on this list, or be able
+            to name it at all, before getting in touch.
+          </p>
+
+          <div className="areas">
+            {areasOfCounselling.map((group) => (
+              <div className="area-group" key={group.group}>
+                <h3>{group.group}</h3>
+                {/* The non-breaking space keeps each separator attached to the
+                    word before it, so a line never begins or ends with a dot. */}
+                <p className="word-list">{group.items.join(" · ")}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
       <section className="section section-tinted">
-        <div className="wrap split">
-          <div>
-            <p className="eyebrow">What to expect</p>
-            <h2>Your first visit</h2>
-            <div className="prose">
-              <p>
-                We&rsquo;ll start with a proper conversation — how you&rsquo;ve
-                been feeling, anything that aches, anything you&rsquo;d rather
-                I avoided. That takes about ten minutes and it&rsquo;s part of
-                the appointment, not on top of it.
-              </p>
-              <p>
-                The studio is on the ground floor, warm, and there&rsquo;s
-                parking right outside. You&rsquo;re covered by a towel
-                throughout, and you never have to remove more than
-                you&rsquo;re comfortable with.
-              </p>
-              <p>
-                Afterwards there&rsquo;s water, or tea if you&rsquo;d like to
-                sit for a while before driving. Most people do.
-              </p>
-            </div>
+        <div className="wrap">
+          <p className="eyebrow">How I work</p>
+          <h2>The approaches I draw on</h2>
+          <div className="grid grid-pairs">
+            {therapies.map((therapy) => (
+              <article className="card" key={therapy.name}>
+                <h3>{therapy.name}</h3>
+                <p>{therapy.detail}</p>
+              </article>
+            ))}
           </div>
-
-          <div className="card">
-            <h3>Good to know</h3>
-            <ul className="tick-list" style={{ marginTop: "1rem" }}>
-              <li>Ground-floor room, no stairs</li>
-              <li>Free parking directly outside</li>
-              <li>Treatments adapted for pregnancy and reduced mobility</li>
-              <li>Cash, card or bank transfer</li>
-              <li>24 hours&rsquo; notice to change an appointment</li>
-            </ul>
+          <div className="btn-row">
+            <Link className="btn btn-secondary" href="/how-i-work">
+              What sessions are actually like
+            </Link>
           </div>
         </div>
       </section>
 
-      <section className="section">
-        <div className="wrap">
-          <p className="eyebrow">Kind words</p>
-          <h2>From people who come back</h2>
-          <div className="grid" style={{ marginTop: "2.5rem" }}>
-            {testimonials.map((testimonial) => (
-              <blockquote className="quote" key={testimonial.author}>
-                <p>&ldquo;{testimonial.quote}&rdquo;</p>
-                <footer>— {testimonial.author}</footer>
-              </blockquote>
+      {/* One quiet line, not a whole section's worth of air around it. */}
+      <section className="section" style={{ paddingBlock: "2.5rem" }}>
+        <div className="wrap wrap-narrow" style={{ textAlign: "center" }}>
+          <ul className="assurances">
+            {qualifications.assurances.map((item) => (
+              <li key={item}>{item}</li>
             ))}
+          </ul>
+        </div>
+      </section>
+
+      {/* For counsellors rather than clients — kept short and kept last, so it
+          never gets in the way of someone looking for therapy. */}
+      <section className="section section-tinted">
+        <div className="wrap wrap-narrow">
+          <div className="card">
+            <h3>{supervision.heading}</h3>
+            <p style={{ marginTop: "0.85rem" }}>{supervision.body}</p>
+            <p>
+              <Link href="/contact">Enquire about supervision &rarr;</Link>
+            </p>
           </div>
         </div>
       </section>
 
       <section className="section cta">
         <div className="wrap wrap-narrow">
-          <h2>{about.heading}</h2>
+          <h2>Taking the first step</h2>
           <p className="lede" style={{ marginInline: "auto" }}>
-            {about.paragraphs[0]}
+            Getting in touch is often the hardest part. There&rsquo;s no need to
+            explain everything in your first message — a sentence is plenty.
           </p>
           <div className="btn-row">
             <Link className="btn btn-primary" href="/contact">
-              Get in touch
+              Arrange an initial call
             </Link>
-            <Link className="btn btn-secondary" href="/about">
-              More about me
-            </Link>
+            <a className="btn btn-secondary" href={`tel:${contact.phoneLink}`}>
+              {contact.phone}
+            </a>
           </div>
         </div>
       </section>

@@ -76,15 +76,28 @@ Worth knowing in advance rather than looking it up in a panic:
 
 ## 7. Check the website's claims
 
-The public site describes treatments and what they help with. Two things to
-verify before it goes live:
+The public site lists qualifications, memberships and around sixty things
+Elizabeth works with. Four things to verify before it goes live:
 
-- **Qualifications and insurance.** The placeholder text claims specific
-  diplomas, insurance and DBS clearance. Every one of those must be true.
-- **Therapeutic claims.** Saying a treatment helps with a named condition is a
-  claim the ASA can act on, and one your insurer may care about. Keep the
-  language to how people commonly feel afterwards rather than promising
-  outcomes.
+- **Qualifications, accreditation and DBS.** The site states a First-class BA
+  (Hons) and Clinical Diploma from Metanoia, a Certificate in Supervision, ACT
+  Level 2 with APT, BACP accredited registration, DBS clearance and over ten
+  years' experience. Every one of those must be true and current — BACP
+  accreditation in particular has to be renewed, and "MBACP (Accred)" must not
+  outlive it.
+- **Professional indemnity insurance.** Not mentioned on the site, but required
+  for BACP registration and worth confirming is in force.
+- **Therapeutic claims.** "Areas I work with" is a list of what people bring,
+  not a list of things counselling cures. Saying therapy *treats* a named
+  condition is a claim the ASA can act on, and one an insurer may care about.
+  The current wording deliberately says "things I work with" for that reason —
+  keep it that way.
+- **The neurodivergence boundary.** The site says plainly that Elizabeth cannot
+  formally diagnose or assess. That sentence is doing real work: people searching
+  for an ADHD or autism assessment need to know immediately. Don't remove it.
+- **The two `‹‹ CHECK ››` placeholders.** `site.url` and `contact.email` in
+  `content/site.ts` are still examples. A published page telling people to email
+  `hello@example.com` is worse than no page.
 
 ## 8. Practical habits that matter more than they sound
 

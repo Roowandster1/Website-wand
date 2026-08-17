@@ -6,9 +6,6 @@ import { nav, site } from "@/content/site";
 
 export default function Header() {
   const pathname = usePathname();
-
-  // Next.js is configured with trailingSlash, so "/about/" needs trimming
-  // before it will match the plain "/about" in the nav config.
   const current = pathname.length > 1 ? pathname.replace(/\/$/, "") : pathname;
 
   return (
@@ -16,7 +13,7 @@ export default function Header() {
       <div className="wrap header-inner">
         <Link href="/" className="brand">
           <span className="brand-name">{site.name}</span>
-          <span className="brand-tagline">{site.tagline}</span>
+          <span className="brand-tagline">{site.credentials}</span>
         </Link>
 
         <nav className="site-nav" aria-label="Main">

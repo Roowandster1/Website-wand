@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { contact, hours, nav, site } from "@/content/site";
+import { availability, contact, nav, site } from "@/content/site";
 
 export default function Footer() {
   const socials = [
@@ -14,6 +14,8 @@ export default function Footer() {
           <div>
             <h3>{site.name}</h3>
             <p style={{ color: "var(--ink-soft)", marginBottom: 0 }}>
+              {site.credentials}
+              <br />
               {site.tagline}
             </p>
           </div>
@@ -27,7 +29,6 @@ export default function Footer() {
               <li>
                 <a href={`mailto:${contact.email}`}>{contact.email}</a>
               </li>
-              <li style={{ color: "var(--ink-soft)" }}>{contact.location}</li>
               {socials.map((s) => (
                 <li key={s.label}>
                   <a href={s.href} rel="noopener noreferrer" target="_blank">
@@ -50,13 +51,14 @@ export default function Footer() {
           </div>
 
           <div>
-            <h3>Opening hours</h3>
+            <h3>Where &amp; when</h3>
             <ul>
-              {hours.map((h) => (
-                <li key={h.day} style={{ color: "var(--ink-soft)" }}>
-                  {h.day} — {h.time}
+              {contact.locations.map((place) => (
+                <li key={place} style={{ color: "var(--ink-soft)" }}>
+                  {place}
                 </li>
               ))}
+              <li style={{ color: "var(--ink-soft)" }}>{availability.hours}</li>
             </ul>
           </div>
         </div>
@@ -65,7 +67,7 @@ export default function Footer() {
           <p>
             © {new Date().getFullYear()} {site.name}
           </p>
-          <p>Fully insured · DBS checked</p>
+          <p>Registered member of the BACP · Accredited</p>
         </div>
       </div>
     </footer>
