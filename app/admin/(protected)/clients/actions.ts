@@ -14,6 +14,15 @@ import {
   updateClient,
   type ClientInput,
 } from "@/lib/clients";
+import { isClientStatus, isEventKind } from "@/lib/client-status";
+import {
+  addClientEvent,
+  deleteClientEvent,
+  dischargeClient,
+  listTags,
+  setClientStatus,
+  setClientTags,
+} from "@/lib/client-lifecycle";
 
 export type ClientFormState = { error?: string };
 
@@ -188,4 +197,120 @@ export async function permanentlyDeleteClient(clientId: number) {
   });
   revalidatePath("/admin/clients");
   redirect("/admin/clients");
+}
+
+/* --------------------------------------------------------------------------
+   Lifecycle: status, timeline, tags.
+
+   Each of these is audited. A change of status or a tag added to a record is a
+   change to health data, and the audit log is what lets her answer honestly who
+   changed what and when.
+   -------------------------------------------------------------------------- */
+
+export async function changeStatus(clientId: number, formData: FormData) {
+  const user = await requireUser();
+  const status = String(formData.get("status") ?? "");
+  if (!isClientStatus(status)) return;
+
+  setClientStatus(clientId, status, user.id);
+  await logAudit("client.status", {
+    userId: user.id,
+    entity: "client",
+    entityId: clientId,
+    detail: status,
+  });
+  revalidatePath("/admin/clients");
+  revalidatePath(`/admin/clients/${clientId}`);
+}
+
+/** One click to finish the work, with room for a closing summary. */
+export async function discharge(clientId: number, formData: FormData) {
+  const user = await requireUser();
+  const summary = String(formData.get("summary") ?? "");
+
+  dischargeClient(clientId, summary, user.id);
+  await logAudit("client.discharged", {
+    userId: user.id,
+    entity: "client",
+    entityId: clientId,
+  });
+  revalidatePath("/admin/clients");
+  revalidatePath(`/admin/clients/${clientId}`);
+}
+
+export type EventFormState = { error?: string };
+
+export async function addTimelineEntry(
+  clientId: number,
+  _prev: EventFormState,
+  formData: FormData,
+): Promise<EventFormState> {
+  const user = await requireUser();
+
+  const kind = String(formData.get("kind") ?? "");
+  const detail = String(formData.get("detail") ?? "").trim();
+  const occurredAt = String(formData.get("occurredAt") ?? "").trim();
+
+  if (!isEventKind(kind)) return { error: "Please choose what kind of entry this is." };
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(occurredAt)) {
+    return { error: "Please give the date as a proper date." };
+  }
+  // Timeline detail is encrypted, so without a key it would be written in clear.
+  if (detail && encryptionUnavailable()) {
+    return {
+      error:
+        "DATA_ENCRYPTION_KEY isn't set, so this can't be stored safely. " +
+        "Set it before recording anything confidential.",
+    };
+  }
+
+  const id = addClientEvent({ clientId, kind, detail, occurredAt }, user.id);
+  await logAudit("client.event.added", {
+    userId: user.id,
+    entity: "client_event",
+    entityId: id,
+    detail: `client ${clientId}, ${kind}`,
+  });
+  revalidatePath(`/admin/clients/${clientId}`);
+  return {};
+}
+
+export async function removeTimelineEntry(clientId: number, eventId: number) {
+  const user = await requireUser();
+  deleteClientEvent(eventId);
+  await logAudit("client.event.deleted", {
+    userId: user.id,
+    entity: "client_event",
+    entityId: eventId,
+    detail: `client ${clientId}`,
+  });
+  revalidatePath(`/admin/clients/${clientId}`);
+}
+
+export async function saveTags(clientId: number, formData: FormData) {
+  const user = await requireUser();
+
+  const ids = formData
+    .getAll("tag")
+    .map((value) => Number(value))
+    .filter((value) => Number.isInteger(value) && value > 0);
+
+  setClientTags(clientId, ids);
+
+  /* The audit detail records how many sensitive tags were applied, not which —
+     writing "ADHD" into the audit log would put health data in a table that
+     isn't encrypted, which is exactly the thing the tag sensitivity flag exists
+     to prevent. */
+  const sensitive = listTags().filter(
+    (tag) => tag.isSensitive && ids.includes(tag.id),
+  ).length;
+
+  await logAudit("client.tags", {
+    userId: user.id,
+    entity: "client",
+    entityId: clientId,
+    detail: `${ids.length} tag(s), ${sensitive} sensitive`,
+  });
+  revalidatePath("/admin/clients");
+  revalidatePath(`/admin/clients/${clientId}`);
 }

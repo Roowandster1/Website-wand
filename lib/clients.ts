@@ -1,3 +1,4 @@
+import type { ClientStatus } from "./client-status";
 import { decrypt, encrypt } from "./crypto";
 import { getDb } from "./db";
 import "server-only";
@@ -24,6 +25,7 @@ export type ClientRow = {
   gp_details_enc: string | null;
   consent_given_at: string | null;
   consent_notes: string | null;
+  status: string;
   is_archived: number;
   reminders_opted_out: number;
   created_at: string;
@@ -47,6 +49,7 @@ export type Client = {
   gpDetails: string;
   consentGivenAt: string;
   consentNotes: string;
+  status: ClientStatus;
   isArchived: boolean;
   remindersOptedOut: boolean;
   createdAt: string;
@@ -89,6 +92,9 @@ function hydrate(row: ClientRow): Client {
     gpDetails: decrypt(row.gp_details_enc),
     consentGivenAt: row.consent_given_at ?? "",
     consentNotes: row.consent_notes ?? "",
+    /* Added by a migration, so an old row read before it ran would have no
+       value at all — default rather than trust the column to be there. */
+    status: (row.status as ClientStatus) ?? "active",
     isArchived: row.is_archived === 1,
     remindersOptedOut: row.reminders_opted_out === 1,
     createdAt: row.created_at,
@@ -102,6 +108,7 @@ export type ClientSummary = {
   fullName: string;
   email: string;
   phone: string;
+  status: ClientStatus;
   isArchived: boolean;
   lastSeen: string | null;
   hasCautions: boolean;
@@ -112,7 +119,7 @@ export function listClients(search = "", includeArchived = false): ClientSummary
   const rows = getDb()
     .prepare(
       `SELECT c.id, c.first_name, c.last_name, c.email, c.phone, c.is_archived,
-              c.allergies_enc, c.contraindications_enc,
+              c.status, c.allergies_enc, c.contraindications_enc,
               (SELECT MAX(a.starts_at) FROM appointments a
                 WHERE a.client_id = c.id AND a.status != 'cancelled') AS last_seen
        FROM clients c
@@ -137,6 +144,7 @@ export function listClients(search = "", includeArchived = false): ClientSummary
       | "email"
       | "phone"
       | "is_archived"
+      | "status"
       | "allergies_enc"
       | "contraindications_enc"
     > & { last_seen: string | null }
@@ -147,6 +155,7 @@ export function listClients(search = "", includeArchived = false): ClientSummary
     fullName: `${row.first_name} ${row.last_name}`.trim(),
     email: row.email ?? "",
     phone: row.phone ?? "",
+    status: (row.status as ClientStatus) ?? "active",
     isArchived: row.is_archived === 1,
     lastSeen: row.last_seen,
     // Flags the record without revealing what the caution is — the list view

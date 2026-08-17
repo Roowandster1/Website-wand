@@ -78,6 +78,17 @@ setup page seals itself and cannot be used again.
 - **Today** — what's booked, what's owed, income so far
 - **Diary** — week view, booking, recurring appointments, double-booking prevention
 - **Clients** — records, health information, treatment notes, consent, archiving
+  - **Status** — waiting / seeing / paused / discharged, shown in the list
+  - **Next** — worked out from the record, never typed in: no consent, a session
+    that was never written up, money owed, nothing in the diary. Derived rather
+    than stored, so it can't go stale
+  - **Not on file yet** — what's missing and what each gap would actually cost
+  - **Timeline** — enquiry through to discharge; status changes log themselves,
+    and the free-text detail is encrypted like a note
+  - **Tags** — a controlled list, split so health tags (ADHD, Autism…) are
+    marked, collapsed by default, and kept out of the audit log
+  - **Discharge** — one click, with a closing summary. Deliberately separate
+    from archiving: one ends the therapy, the other hides the record
 - **Payments** — what's been paid, what's outstanding, yearly totals
 - **Reports** — what earns most, who's drifted away, website visitors
 - **Settings** — two-factor authentication, password, backups, activity log

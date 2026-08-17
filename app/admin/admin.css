@@ -986,3 +986,223 @@ table.data .num {
     color: #eeae95;
   }
 }
+
+/* --- Where a client is up to ------------------------------------------------
+   Status, the derived next action, the missing-information list, tags and the
+   timeline. All of it lives inside the light main column, so the accent colours
+   here are the light-ground ones.
+   --------------------------------------------------------------------------- */
+
+/* The next action. A band rather than a panel, and coloured by how much it
+   matters, so it reads before anything else on the page. */
+.next-action {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0 1rem;
+  align-items: start;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--ink-soft);
+  border-radius: var(--radius);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.next-action-urgent { border-left-color: var(--alert); }
+.next-action-due    { border-left-color: #c98a2f; }
+.next-action-calm   { border-left-color: var(--accent); }
+
+.next-action-label {
+  font-size: .66rem;
+  font-weight: 700;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin: .15rem 0 0;
+}
+
+.next-action-title {
+  margin: 0;
+  font-weight: 620;
+  font-size: 1rem;
+}
+
+.next-action-detail {
+  margin: .15rem 0 0;
+  font-size: .9rem;
+  color: var(--ink-soft);
+}
+
+/* What isn't on file. Label and consequence, not a row of empty fields. */
+.gap-list {
+  list-style: none;
+  margin: 0 0 1.25rem;
+  padding: 0;
+}
+
+.gap-list li {
+  display: grid;
+  gap: .1rem;
+  padding: .65rem 0;
+  border-top: 1px solid var(--line);
+}
+
+.gap-list li:last-child { border-bottom: 1px solid var(--line); }
+
+.gap-list strong { font-size: .95rem; }
+
+.gap-list span {
+  font-size: .87rem;
+  color: var(--ink-soft);
+}
+
+/* Status control. */
+.status-form {
+  display: grid;
+  gap: .75rem;
+  justify-items: start;
+}
+
+.status-form .field { width: 100%; }
+
+.discharge {
+  margin-top: 1.25rem;
+  border-top: 1px solid var(--line);
+  padding-top: 1rem;
+}
+
+.discharge summary {
+  cursor: pointer;
+  font-size: .9rem;
+  color: var(--ink-soft);
+}
+
+.discharge summary:hover { color: var(--ink); }
+
+.discharge .form { margin-top: 1rem; max-width: none; }
+
+/* Tags. Two groups, the health ones marked and collapsed by default. */
+.tag-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+}
+
+.tag-check {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  font-size: .87rem;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: .3rem .7rem;
+  cursor: pointer;
+}
+
+.tag-check:hover { border-color: var(--accent); }
+
+.tag-check:has(input:checked) {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.tag-check input { accent-color: var(--accent); margin: 0; }
+
+.tag-sensitive {
+  margin-top: 1rem;
+  border-top: 1px solid var(--line);
+  padding-top: .85rem;
+}
+
+.tag-reveal {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-size: .87rem;
+  color: var(--accent);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Sensitive tags read as health data, so they are tinted differently from the
+   logistical ones — the difference should be visible at a glance. */
+.tag-sensitive .tag-check:has(input:checked) {
+  background: var(--alert-soft);
+  border-color: var(--alert);
+  color: var(--alert-ink);
+}
+
+/* The timeline. A rule down the left with the entries hung off it. */
+.timeline {
+  list-style: none;
+  margin: 1.5rem 0 0;
+  padding: 0 0 0 1.1rem;
+  border-left: 1px solid var(--line);
+}
+
+.timeline li {
+  position: relative;
+  padding: 0 0 1.25rem 0;
+}
+
+.timeline li::before {
+  content: "";
+  position: absolute;
+  left: calc(-1.1rem - 3.5px);
+  top: .5rem;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.timeline-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .25rem .75rem;
+  align-items: baseline;
+}
+
+.timeline-kind {
+  font-weight: 620;
+  font-size: .93rem;
+}
+
+.timeline-when {
+  font-size: .82rem;
+  color: var(--ink-soft);
+}
+
+.timeline li p {
+  margin: .3rem 0 0;
+  font-size: .92rem;
+  color: var(--ink-soft);
+}
+
+.timeline-foot {
+  display: flex;
+  gap: 1rem;
+  align-items: baseline;
+  margin-top: .35rem;
+  font-size: .78rem;
+  color: var(--ink-soft);
+}
+
+/* Status badges in the client list. Muted on purpose — the list is scanned, and
+   five saturated pills per row would be harder to read than the names. */
+.badge-status-active     { background: var(--accent-soft); color: var(--accent); }
+.badge-status-waiting    { background: #fbe9c9; color: #8a5d00; }
+.badge-status-paused     { background: var(--panel-2); color: var(--ink-soft); }
+.badge-status-discharged { background: var(--panel-2); color: var(--ink-soft); }
+
+@media (prefers-color-scheme: dark) {
+  .admin-root:not([data-theme="light"]) .badge-status-waiting {
+    background: #3a2f14;
+    color: #e8c477;
+  }
+}

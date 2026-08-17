@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { listClients } from "@/lib/clients";
+import { STATUS_LABELS } from "@/lib/client-status";
 import { formatDateShort } from "@/lib/dates";
 
 export const metadata: Metadata = { title: "Clients" };
@@ -71,6 +72,7 @@ export default async function ClientsPage({
               <thead>
                 <tr>
                   <th>Name</th>
+                  <th>Status</th>
                   <th>Contact</th>
                   <th>Last seen</th>
                   <th></th>
@@ -89,6 +91,11 @@ export default async function ClientsPage({
                           <span className="badge">archived</span>
                         </>
                       )}
+                    </td>
+                    <td>
+                      <span className={`badge badge-status-${client.status}`}>
+                        {STATUS_LABELS[client.status]}
+                      </span>
                     </td>
                     <td>
                       {client.phone && <div>{client.phone}</div>}
