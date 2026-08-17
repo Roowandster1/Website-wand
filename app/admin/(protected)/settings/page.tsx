@@ -8,6 +8,7 @@ import { recentAudit } from "@/lib/audit";
 import { backupIsStale, recentBackupRuns } from "@/lib/auto-backup";
 import { backupSummary } from "@/lib/backup";
 import { formatDateTime } from "@/lib/dates";
+import { goLiveChecks, readyToGoLive } from "@/lib/go-live";
 import { isEmailConfigured } from "@/lib/email";
 import { isOneDriveConfigured } from "@/lib/onedrive";
 import { recentReminders } from "@/lib/reminders";
@@ -24,6 +25,9 @@ export default async function SettingsPage({
   const user = await requireUser();
   const audit = recentAudit(40);
   const summary = backupSummary();
+  const checks = goLiveChecks({ twoFactorEnabled: Boolean(user.totp_enabled) });
+  const ready = readyToGoLive(checks);
+  const outstanding = checks.filter((check) => check.status !== "done");
 
   const backupError =
     params.backup === "short"
@@ -63,6 +67,38 @@ export default async function SettingsPage({
           </p>
         </div>
       )}
+
+      {/* Worked out from the running server, so it can't fall out of step with
+          what is actually configured. */}
+      <section className="panel" style={{ marginBottom: "1.5rem" }}>
+        <h2>Before the site goes live</h2>
+        <p style={{ color: "var(--ink-soft)", fontSize: "0.92rem" }}>
+          {ready
+            ? outstanding.length === 0
+              ? "Everything on this list is done. The site is ready."
+              : "Everything that matters is done. What's left is optional."
+            : `${outstanding.filter((c) => c.blocking).length} thing(s) still need doing before this should be public.`}
+        </p>
+
+        <ul className="checklist">
+          {checks.map((check) => (
+            <li key={check.id} data-status={check.status}>
+              <span className="checklist-mark" aria-hidden="true">
+                {check.status === "done" ? "✓" : check.status === "later" ? "·" : "!"}
+              </span>
+              <div>
+                <p className="checklist-title">
+                  {check.title}
+                  {check.blocking && check.status !== "done" && (
+                    <span className="badge badge-caution">needed</span>
+                  )}
+                </p>
+                <p className="checklist-detail">{check.detail}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </section>
 
       <div className="admin-grid admin-grid-2">
         <div>

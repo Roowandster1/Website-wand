@@ -246,13 +246,21 @@ of a failed deploy:
 | `Unsupported engine` / Node version error | Builder picked an old Node | `engines` and `.nvmrc` now pin ≥20.9 — redeploy |
 | `gyp` / `node-gyp` / `better-sqlite3` build error | Native module compiled without a toolchain | Make sure it's building from the `Dockerfile`, not Nixpacks |
 | Healthcheck timeout, app otherwise fine | Healthcheck hitting a redirect | Path must be `/api/health/` **with** the trailing slash |
-| `{"status":"not ready","problems":[...]}` | App started but is misconfigured | The `problems` list names exactly what's missing |
 | Deploy succeeds, data disappears later | No volume attached | Add the `/data` volume (step 1) |
 
-`GET /api/health/` is a readiness check that fails the deploy rather than
-letting a misconfigured app take traffic. It confirms the database is writable
-and the encryption key is present and valid, and returns the reason when either
-isn't. It never returns client data.
+`GET /api/health/` reports what the server thinks of itself — whether it is
+serving, whether the database is writable, and a `warnings` list naming anything
+misconfigured. It never returns client data.
+
+It is deliberately **not** wired up as a deploy gate. A misconfigured app that
+starts and explains itself is more useful than a deploy that fails leaving no
+page to read; anything wrong shows up in the dashboard instead, under
+**Settings → Before the site goes live**, which reads the running server and so
+can't fall out of step with it.
+
+**Going live is its own document: [docs/going-live.md](docs/going-live.md).** It
+covers the volume, the domain, the four pieces of text still needed, ICO
+registration and the order to do them in.
 
 ---
 

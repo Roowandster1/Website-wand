@@ -1206,3 +1206,50 @@ table.data .num {
     color: #e8c477;
   }
 }
+
+/* --- The go-live checklist -------------------------------------------------- */
+
+.checklist {
+  list-style: none;
+  margin: 1.25rem 0 0;
+  padding: 0;
+}
+
+.checklist li {
+  display: grid;
+  grid-template-columns: 1.5rem minmax(0, 1fr);
+  gap: 0 .75rem;
+  padding: .8rem 0;
+  border-top: 1px solid var(--line);
+}
+
+.checklist li:last-child { border-bottom: 1px solid var(--line); }
+
+.checklist-mark {
+  font-weight: 700;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.checklist li[data-status="done"]  .checklist-mark { color: var(--accent); }
+.checklist li[data-status="todo"]  .checklist-mark { color: var(--alert); }
+/* "later" means deliberately not yet — a quiet dot, not a warning. */
+.checklist li[data-status="later"] .checklist-mark { color: var(--ink-soft); }
+
+.checklist li[data-status="done"] .checklist-title { color: var(--ink-soft); }
+
+.checklist-title {
+  margin: 0;
+  font-weight: 620;
+  font-size: .95rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .5rem;
+}
+
+.checklist-detail {
+  margin: .2rem 0 0;
+  font-size: .88rem;
+  color: var(--ink-soft);
+}
