@@ -29,7 +29,12 @@ COPY . .
 ENV DATA_ENCRYPTION_KEY=YnVpbGQtdGltZS1wbGFjZWhvbGRlci0zMi1ieXRlcy4=
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV BUILD_STANDALONE=1
-RUN npm run build
+# Guarantees these exist before the final stage copies them. `public` is
+# tracked in git via a placeholder file, but an empty folder is invisible to git
+# and a COPY of a path that does not exist fails the whole build with
+# "failed to calculate checksum" — which reads like corruption, not a missing
+# folder. Belt and braces, because that error costs a deploy to diagnose.
+RUN mkdir -p public scripts && npm run build
 
 # --- Run --------------------------------------------------------------------
 FROM node:22-slim AS run

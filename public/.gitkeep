@@ -1,0 +1,5 @@
+Photographs and other files put in this folder are served directly by the site.
+A file saved here as "room.jpg" is reachable at /room.jpg.
+
+This placeholder exists so the folder itself is tracked by git — an empty folder
+is invisible to git, and the container build needs this folder to exist.
