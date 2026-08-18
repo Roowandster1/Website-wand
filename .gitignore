@@ -9,3 +9,6 @@ next-env.d.ts
 # Local secrets and the live database
 .env.local
 data/
+
+# Claude Code local overrides
+.claude/settings.local.json
