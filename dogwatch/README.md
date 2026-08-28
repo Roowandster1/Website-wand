@@ -69,7 +69,14 @@ dogwatch/
 
 ## Setting it up
 
-**[SETUP.md](SETUP.md)** is the step-by-step guide. At any point:
+```bash
+git clone -b claude/dog-monitoring-system-yxz1w5 \
+  https://github.com/Roowandster1/Website-wand.git
+cd Website-wand/dogwatch
+./install.sh
+```
+
+**[SETUP.md](SETUP.md)** is the full step-by-step guide. At any point:
 
 ```bash
 python3 -m service --config dogwatch.yml doctor

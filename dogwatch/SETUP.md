@@ -24,13 +24,32 @@ it's quiet.
 - [ ] Optional: an **Anthropic API key**, for the `update` summary. Everything
       else works without it.
 
+### Get the code and install everything
+
+On the Geekom, running **Linux** (see the note below if it came with Windows):
+
 ```bash
-sudo apt install -y ffmpeg v4l-utils docker.io
-git clone <this repo> && cd Website-wand/dogwatch
-pip install -r requirements.txt
-cp .env.example .env
-cp dogwatch.yml.example dogwatch.yml
+git clone -b claude/dog-monitoring-system-yxz1w5 \
+  https://github.com/Roowandster1/Website-wand.git
+cd Website-wand/dogwatch
+./install.sh
 ```
+
+`install.sh` installs ffmpeg, v4l-utils, Docker, sqlite3 and the Python
+dependencies, creates `.env` and `dogwatch.yml` from the examples, lists your
+camera and its supported resolutions, and finishes by running the doctor. It is
+idempotent — re-run it whenever you like, it will not overwrite a config you
+have edited.
+
+The code lives in the `dogwatch/` folder of a website repo, which is an odd
+home for it. It is entirely self-contained, so it can be split into its own
+repository whenever you want.
+
+> **If the Geekom came with Windows**, install Ubuntu on it (or dual-boot).
+> USB cameras cannot be passed through to Docker under WSL2, so the camera would
+> never reach Frigate. `install.sh` checks for this and stops with an
+> explanation rather than half-installing. The Pi is a fallback for a
+> single camera if you would rather not touch the Geekom's OS.
 
 ---
 

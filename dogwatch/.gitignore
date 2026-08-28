@@ -1,6 +1,10 @@
 # Secrets
 .env
 
+# Your local config, created by install.sh from dogwatch.yml.example.
+# Not a secret, but it is yours — zone coordinates, dog names, your thresholds.
+dogwatch.yml
+
 # Runtime state — never commit recordings, databases or broker state
 storage/
 frigate/media/
