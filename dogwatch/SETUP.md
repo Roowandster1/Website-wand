@@ -45,11 +45,18 @@ The code lives in the `dogwatch/` folder of a website repo, which is an odd
 home for it. It is entirely self-contained, so it can be split into its own
 repository whenever you want.
 
-> **If the Geekom came with Windows**, install Ubuntu on it (or dual-boot).
-> USB cameras cannot be passed through to Docker under WSL2, so the camera would
-> never reach Frigate. `install.sh` checks for this and stops with an
-> explanation rather than half-installing. The Pi is a fallback for a
-> single camera if you would rather not touch the Geekom's OS.
+> **If the Geekom came with Windows** — most do — you have three options. The
+> constraint is narrower than "Windows doesn't work": a **USB webcam** cannot be
+> passed through to Docker on Windows. Video arriving over the network is fine.
+>
+> | Route | Camera | Trade |
+> |---|---|---|
+> | **Ubuntu on the Geekom** | USB webcam | Best. Full speed, hardware acceleration. ~1 hour to install |
+> | Keep Windows + Docker Desktop | network/RTSP only | An old phone running an RTSP app, or a cheap wifi camera. CPU detection only |
+> | Raspberry Pi | USB webcam | Works today, Geekom untouched. One camera, low fps, external disk for recordings |
+>
+> `install.sh` refuses to run where it cannot work rather than half-installing.
+> The step-by-step Ubuntu install is in the setup checklist.
 
 ---
 

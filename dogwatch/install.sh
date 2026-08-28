@@ -27,15 +27,24 @@ case "$(uname -s)" in
     echo "       cannot do. Run this on the Linux box, or use a network camera."
     exit 1 ;;
   *)
-    bad "$(uname -s) is not supported. Dogwatch needs Linux."
-    echo "       On Windows, install Ubuntu on the mini PC (or dual-boot):"
-    echo "       USB camera passthrough into Docker does not work under WSL2."
+    bad "$(uname -s) is not supported by this installer."
+    echo
+    echo "       The real constraint is narrower than it looks: a USB webcam"
+    echo "       cannot be passed through to Docker on Windows. Three ways round it:"
+    echo
+    echo "         1. Install Ubuntu on this machine  -> USB webcam works, full speed"
+    echo "         2. Keep Windows + Docker Desktop   -> needs a NETWORK (RTSP) camera"
+    echo "                                               instead; CPU detection only"
+    echo "         3. Run it on a Raspberry Pi        -> USB webcam works today"
+    echo
+    echo "       See SETUP.md."
     exit 1 ;;
 esac
 
 if grep -qi microsoft /proc/version 2>/dev/null; then
-  bad "This is WSL. USB cameras cannot be passed into Docker here."
-  echo "       Install Ubuntu directly on the mini PC instead."
+  bad "This is WSL. A USB camera cannot be passed into Docker here."
+  echo "       Install Ubuntu directly on the machine, or keep Windows and use a"
+  echo "       network (RTSP) camera instead of a USB one. See SETUP.md."
   exit 1
 fi
 ok "Linux $(uname -r)"
