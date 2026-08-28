@@ -5,8 +5,9 @@
 # tag, re-read that version's release notes first — Frigate changes config keys
 # between minor versions.
 #
-# Phases 0-2 need only these two services. The `dogwatch` service is added in
-# Phase 3, once the MQTT observer has told us what the real data looks like.
+# Phases 0-2 need only mosquitto + frigate. The `dogwatch` service holds the
+# ledger, identity resolution and alerting; it ships with alerts.shadow_mode
+# on, so it records what it WOULD send and sends nothing until you turn that off.
 
 services:
   mosquitto:
@@ -52,3 +53,19 @@ services:
       - "8555:8555/udp"
     environment:
       TZ: ${TZ:-Europe/London}
+
+  dogwatch:
+    build: .
+    container_name: dogwatch-service
+    restart: unless-stopped
+    depends_on:
+      - mosquitto
+      - frigate
+    volumes:
+      - ./dogwatch.yml:/config/dogwatch.yml:ro
+      - ./storage:/app/storage
+    environment:
+      TZ: ${TZ:-Europe/London}
+      # Secrets come from .env — never from the committed YAML.
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}

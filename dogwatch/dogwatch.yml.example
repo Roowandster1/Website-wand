@@ -95,6 +95,21 @@ alerts:
   # Run a full day in shadow mode and read the log before flipping this.
   shadow_mode: true
 
+  # Overnight suppression. A stillness alert is a repositioning cue, not an
+  # emergency; one that fires at 4am gets the whole system muted, after which it
+  # protects nothing. Suppressed occurrences are still recorded, so the morning
+  # /update can tell you he did not shift all night.
+  #
+  # Anything NOT listed under `suppress` still wakes you — deliberately, absence
+  # of the crated dog and a dead monitor are never silenced.
+  quiet_hours:
+    enabled: true
+    start: "22:30"
+    end: "07:00"
+    suppress:
+      - stillness
+      - bark_burst
+
   defaults:
     # Condition must hold this long before notifying — kills flapping.
     confirm_for_seconds: 120

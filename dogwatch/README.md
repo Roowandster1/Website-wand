@@ -39,15 +39,75 @@ confidently wrong summary about a sick dog is worse than an honest uncertain one
 
 ```
 dogwatch/
-├── docker-compose.yml        Frigate 0.17.2 + Mosquitto
+├── docker-compose.yml        Frigate 0.17.2 + Mosquitto + the service
+├── Dockerfile
 ├── frigate/config.yml        camera, zones, dog+person detection, bark audio
 ├── mosquitto/mosquitto.conf
-├── dogwatch.yml.example      service config (Phase 3+)
+├── dogwatch.yml.example      service config — copy to dogwatch.yml
 ├── .env.example              secrets — copy to .env, never committed
+├── service/
+│   ├── models.py             Detection, Track, DogState, Incident
+│   ├── config.py             strict config loading and validation
+│   ├── tracking.py           track registry + identity resolution
+│   ├── ledger.py             SQLite: raw events, minute rollup, run compression
+│   ├── rules.py              alert rules and the incident state machine
+│   ├── summarise.py          the /update digest and Claude call
+│   ├── commands.py           Telegram command parsing and responses
+│   ├── notify.py             Telegram / shadow / log sinks
+│   ├── source.py             live MQTT and replay, same interface
+│   └── app.py                wiring
+├── tests/                    80 tests, no broker or camera required
 └── tools/
     ├── check_stream.sh       Phase 0 — prove the camera works
-    └── mqtt_watch.py         Phase 2 — characterise the real event stream
+    ├── mqtt_watch.py         Phase 2 — characterise the real event stream
+    ├── simulate_day.py       generate a realistic 24h capture
+    └── replay.py             run a capture through the whole pipeline
 ```
+
+## Working on it without hardware
+
+The entire pipeline runs offline against a recorded or simulated capture. A
+simulated day completes in about 0.2 seconds, so rule changes can be checked
+immediately.
+
+```bash
+pip install -r requirements.txt
+python3 -m pytest tests/ -q
+
+# generate a day and run it through everything
+python3 tools/simulate_day.py --scenario incident --out day.jsonl
+python3 tools/replay.py day.jsonl --timeline --digest
+```
+
+Scenarios: `normal` (good care all day), `incident` (nobody repositions the
+crated dog all afternoon), `ambiguous` (both dogs loose together, identity
+should degrade rather than guess).
+
+`--digest` prints exactly what `/update` would send to Claude, and the estimated
+cost, without making an API call.
+
+Once you have a real capture from Phase 2, replay that instead — it is the same
+command, and far better evidence than any simulation.
+
+## CLI
+
+```bash
+python -m service --config dogwatch.yml validate     # check config, exit
+python -m service --config dogwatch.yml replay f.jsonl
+python -m service --config dogwatch.yml digest --hours 6
+python -m service --config dogwatch.yml run          # live
+```
+
+## Telegram commands
+
+```
+update [6h]   summarise what the dogs have been doing
+status        instant state — no model call, free
+quiet 2h      mute alerts for a while
+out / in      the crated dog has left / returned
+```
+
+`update` works as a bare word, not just `/update`.
 
 ---
 
@@ -141,26 +201,45 @@ lying there as absent.
 
 **Gate:** you can state, from your own data, how often identity is ambiguous.
 
-### Phase 3 — the ledger, no alerts
+### Phase 3 — the ledger
 
-TrackRegistry → DogState → SQLite, plus a `/status` command. **No notifications
-at all.** Run 2–3 days, then query the database: does the identity split hold in
-practice? De-risks the hardest part with no possibility of alert spam.
+**Built.** TrackRegistry → DogState → SQLite, plus `status`. Run it for 2–3 days
+with `shadow_mode: true`, then query the database: does the identity split hold
+in practice?
+
+```sql
+-- how often could we actually tell the dogs apart?
+SELECT dog, confidence, COUNT(*) FROM activity_minutes
+WHERE state != 'out_of_view' GROUP BY dog, confidence;
+```
+
+Set `tracking.live_window_seconds` from the p95 gap Phase 2 reported before
+trusting any of these numbers.
 
 ### Phase 4 — the `/update` summariser
 
-Reads the ledger Phase 3 has been filling. Deliberately before alerts: it is the
-feature you actually want, and it is read-only over data that already exists.
+**Built.** Reads the ledger. Sends a compressed timeline plus up to 8 sampled
+still frames to Claude — **stills and structured data, not video.** Measured at
+roughly **$0.06 per update** on the simulated days.
 
-Sends a compressed activity timeline plus 6–8 sampled still frames to Claude —
-**stills and structured data, not video.** Roughly $0.06–0.08 per update.
+Check the digest before spending anything: `python3 tools/replay.py day.jsonl --digest`.
 
 ### Phase 5 — alerts
 
-Stillness, absence, bark bursts, with a proper incident state machine
-(`confirm_for` kills flapping, `cooldown` kills spam). Ships with
-`alerts.shadow_mode: true` — it logs what it *would* have sent for a day, you read
-that log, and only then does it get permission to send.
+**Built, shipping in shadow mode.** Stillness, absence, bark bursts and a
+Frigate-silence dead-man's switch, each with an incident state machine
+(`confirm_for` kills flapping, `cooldown` kills repeats).
+
+`alerts.shadow_mode: true` records what it *would* have sent and sends nothing.
+Read a full day of that before flipping it. Thresholds in `dogwatch.yml` are
+starting points, not recommendations — tune them against your own recorded data.
+
+**Quiet hours are on by default** (22:30–07:00, suppressing `stillness` and
+`bark_burst`). Replaying a normal day showed a stillness alert at 04:02 on an
+otherwise fine night: correct in principle, but an alert that wakes you at 4am
+for a non-emergency gets the system muted, after which it protects nothing.
+Suppressed occurrences are still recorded, so the morning `update` can tell you
+he did not shift all night. `absence` and `frigate_silent` are never silenced.
 
 ### Phase 6 — hardening
 
@@ -176,7 +255,11 @@ Pi watchdog for Frigate silence, disk retention, restart policies, DB backup.
   are loose together. Logged honestly rather than guessed.
 - **Reliable detection of a flat dog behind bars is unproven** until Phase 1.
 - Frigate stops detecting on stationary objects, so a still dog produces few
-  events. The service must poll as well as subscribe.
+  events. A long gap on a *continuous* track id is read as stillness; a long gap
+  with a *new* track id is read as "we lost him", and re-anchors rather than
+  claiming a stillness duration nobody observed.
+- Everything is tested against simulated and replayed data. **None of it has met
+  a real camera yet** — Phase 0 and 1 are still the gates that matter.
 
 ---
 
