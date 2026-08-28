@@ -67,6 +67,17 @@ dogwatch/
     └── replay.py             run a capture through the whole pipeline
 ```
 
+## Setting it up
+
+**[SETUP.md](SETUP.md)** is the step-by-step guide. At any point:
+
+```bash
+python3 -m service --config dogwatch.yml doctor
+```
+
+checks the camera, broker, Frigate, zones, credentials and config, says what is
+wrong and what to do about it, and exits non-zero if something is blocking.
+
 ## Working on it without hardware
 
 The entire pipeline runs offline against a recorded or simulated capture. A
@@ -95,10 +106,13 @@ command, and far better evidence than any simulation.
 ## CLI
 
 ```bash
-python -m service --config dogwatch.yml validate     # check config, exit
+python -m service --config dogwatch.yml doctor         # check the whole setup
+python -m service --config dogwatch.yml telegram-setup # find your chat id
+python -m service --config dogwatch.yml test-summary   # one real Claude call
+python -m service --config dogwatch.yml validate       # check config, exit
 python -m service --config dogwatch.yml replay f.jsonl
 python -m service --config dogwatch.yml digest --hours 6
-python -m service --config dogwatch.yml run          # live
+python -m service --config dogwatch.yml run            # live
 ```
 
 ## Telegram commands

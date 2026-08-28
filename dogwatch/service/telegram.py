@@ -91,7 +91,9 @@ class TelegramPoller:
             text = msg.get("text") or ""
             if chat_id is None or not text:
                 continue
-            if int(chat_id) not in self.allowed:
+            # `allowed = None` is the setup helper discovering an id; every
+            # normal path passes a real allowlist.
+            if self.allowed is not None and int(chat_id) not in self.allowed:
                 # Silently ignored. No reply — that would confirm the bot to a
                 # prober — but the offset still advances so it is not re-read.
                 self.dropped_unknown_chat += 1
