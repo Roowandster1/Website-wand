@@ -57,6 +57,39 @@ CREATE TABLE IF NOT EXISTS activity_minutes (
 );
 CREATE INDEX IF NOT EXISTS idx_minutes_ts ON activity_minutes(minute_ts);
 
+-- Small key/value store for things that must survive a restart: the Telegram
+-- update offset (or a restart replays yesterday's commands) and the date of the
+-- last daily summary (or a restart at 08:05 sends a second one).
+CREATE TABLE IF NOT EXISTS meta (
+    key   TEXT PRIMARY KEY,
+    value TEXT
+);
+
+-- Things a person did, that no camera can see. For a paralysed dog on a
+-- bladder-expression schedule this is the record that actually matters.
+CREATE TABLE IF NOT EXISTS care_log (
+    id     INTEGER PRIMARY KEY,
+    ts     REAL NOT NULL,
+    kind   TEXT NOT NULL,      -- fed | water | pee | poo | meds | note
+    dog    TEXT,               -- NULL when it applies to both / unspecified
+    note   TEXT,
+    source TEXT NOT NULL       -- manual | camera
+);
+CREATE INDEX IF NOT EXISTS idx_care_ts ON care_log(ts);
+
+-- Camera-derived zone visits. Presence and duration only: this records that a
+-- dog was at the bowl, never that it drank.
+CREATE TABLE IF NOT EXISTS zone_visits (
+    id         INTEGER PRIMARY KEY,
+    dog        TEXT NOT NULL,
+    zone       TEXT NOT NULL,
+    entered_ts REAL NOT NULL,
+    left_ts    REAL,
+    duration   REAL,
+    confidence TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_visits_ts ON zone_visits(entered_ts);
+
 CREATE TABLE IF NOT EXISTS alerts (
     id      INTEGER PRIMARY KEY,
     ts      REAL NOT NULL,
@@ -153,6 +186,68 @@ class Ledger:
     def commit(self) -> None:
         self.db.commit()
 
+    # -- meta key/value ----------------------------------------------------
+
+    def get_meta(self, key: str, default: str | None = None) -> str | None:
+        row = self.db.execute("SELECT value FROM meta WHERE key = ?", (key,)).fetchone()
+        return row["value"] if row else default
+
+    def set_meta(self, key: str, value: str) -> None:
+        self.db.execute(
+            "INSERT INTO meta (key, value) VALUES (?,?) "
+            "ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+            (key, str(value)),
+        )
+        self.db.commit()
+
+    # -- care log ----------------------------------------------------------
+
+    def write_care(self, ts: float, kind: str, *, dog: str | None = None,
+                   note: str = "", source: str = "manual") -> None:
+        self.db.execute(
+            "INSERT INTO care_log (ts, kind, dog, note, source) VALUES (?,?,?,?,?)",
+            (ts, kind, dog, note, source),
+        )
+        self.db.commit()
+
+    def care_between(self, start_ts: float, end_ts: float) -> list[sqlite3.Row]:
+        return list(self.db.execute(
+            "SELECT * FROM care_log WHERE ts >= ? AND ts <= ? ORDER BY ts",
+            (start_ts, end_ts),
+        ))
+
+    def last_care(self, kind: str) -> sqlite3.Row | None:
+        return self.db.execute(
+            "SELECT * FROM care_log WHERE kind = ? ORDER BY ts DESC LIMIT 1", (kind,)
+        ).fetchone()
+
+    # -- zone visits -------------------------------------------------------
+
+    def write_visit(self, dog: str, zone: str, entered_ts: float,
+                    left_ts: float, confidence: str) -> None:
+        self.db.execute(
+            "INSERT INTO zone_visits (dog, zone, entered_ts, left_ts, duration, "
+            "confidence) VALUES (?,?,?,?,?,?)",
+            (dog, zone, entered_ts, left_ts, max(0.0, left_ts - entered_ts), confidence),
+        )
+
+    def visits_between(self, start_ts: float, end_ts: float,
+                       zone: str | None = None) -> list[sqlite3.Row]:
+        q = ("SELECT * FROM zone_visits WHERE entered_ts >= ? AND entered_ts <= ?")
+        args: list[Any] = [start_ts, end_ts]
+        if zone:
+            q += " AND zone = ?"
+            args.append(zone)
+        return list(self.db.execute(q + " ORDER BY entered_ts", args))
+
+    def last_visit(self, zone: str, dog: str | None = None) -> sqlite3.Row | None:
+        q = "SELECT * FROM zone_visits WHERE zone = ?"
+        args: list[Any] = [zone]
+        if dog:
+            q += " AND dog = ?"
+            args.append(dog)
+        return self.db.execute(q + " ORDER BY entered_ts DESC LIMIT 1", args).fetchone()
+
     # -- reads -------------------------------------------------------------
 
     def minutes(self, start_ts: float, end_ts: float,
@@ -244,6 +339,17 @@ class Ledger:
             )
         return per_dog
 
+    def barks_by_hour(self, start_ts: float, end_ts: float) -> list[tuple[int, int]]:
+        """Room-level bark counts bucketed by hour."""
+        rows = self.db.execute(
+            "SELECT CAST(minute_ts / 3600 AS INTEGER) * 3600 AS hour_ts, "
+            "SUM(barks) AS n FROM activity_minutes "
+            "WHERE dog = '__room__' AND minute_ts >= ? AND minute_ts <= ? "
+            "GROUP BY hour_ts ORDER BY hour_ts",
+            (minute_of(start_ts), minute_of(end_ts)),
+        )
+        return [(int(r["hour_ts"]), int(r["n"] or 0)) for r in rows]
+
     def recent_alerts(self, since_ts: float) -> list[sqlite3.Row]:
         return list(self.db.execute(
             "SELECT * FROM alerts WHERE ts >= ? ORDER BY ts", (since_ts,)
@@ -256,6 +362,10 @@ class Ledger:
                             (now - raw_days * 86400,)).rowcount
         m = self.db.execute("DELETE FROM activity_minutes WHERE minute_ts < ?",
                             (now - minute_days * 86400,)).rowcount
+        # Zone visits are as chatty as raw events; the care log is small and
+        # hand-written, so it is kept for as long as the minute rollup.
+        self.db.execute("DELETE FROM zone_visits WHERE entered_ts < ?",
+                        (now - raw_days * 86400,))
         self.db.commit()
         return e, m
 

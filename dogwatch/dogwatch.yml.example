@@ -161,6 +161,50 @@ summariser:
   # instructed not to offer veterinary opinion.
   hedge_on_ambiguous_identity: true
 
+# ---------------------------------------------------------------------------
+# Daily morning summary
+# ---------------------------------------------------------------------------
+# The complement to quiet hours: overnight alerts are deliberately silenced, so
+# this is where you find out what you missed. It leads with anything that was
+# suppressed overnight.
+daily_summary:
+  enabled: true
+  at: "08:00"
+  window_hours: 12
+  # If the box reboots at 20:00 and today's summary never went out, sending a
+  # "morning" summary then would be nonsense. Outside this window past `at`, the
+  # day is marked done without sending.
+  grace_minutes: 120
+
+# ---------------------------------------------------------------------------
+# Local dashboard
+# ---------------------------------------------------------------------------
+# Read-only activity timeline on your LAN. NO AUTHENTICATION — it reveals when
+# the house is empty, so do not port-forward it.
+dashboard:
+  enabled: true
+  host: "0.0.0.0"
+  port: 8080
+  default_hours: 48
+
+# ---------------------------------------------------------------------------
+# Care tracking
+# ---------------------------------------------------------------------------
+# The camera records zone PRESENCE and duration. It cannot tell that a dog
+# drank, urinated or ate — only that it was there. Anything that matters
+# clinically (bladder expression, meds, meals) is logged by you via Telegram:
+#   fed / water / pee / poo / meds  [optional note]
+# The summary keeps the two sources clearly apart and never merges them.
+care:
+  min_visit_seconds: 20
+  track_zones:
+    - water_food
+    # - toilet_area      # add the zone to frigate/config.yml first
+  # Reported in the summary only, never pushed as an alert — a dog that drank
+  # off camera would otherwise raise a false alarm about something frightening.
+  # 0 disables it.
+  hydration_warn_hours: 0
+
 telegram:
   # Token comes from TELEGRAM_BOT_TOKEN in .env.
   chat_ids:

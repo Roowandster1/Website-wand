@@ -58,3 +58,24 @@ def make_config(**overrides):
         yaml.safe_dump(raw, fh)
         p = fh.name
     return cfgmod.load(p, env={})
+
+
+def make_app(notifier=None, **overrides):
+    """A Dogwatch wired to an in-memory ledger and a recording notifier."""
+    from service.app import Dogwatch
+    from service.ledger import Ledger
+    from service.notify import LogNotifier
+
+    cfg = make_config(**overrides)
+    n = notifier or LogNotifier()
+    return cfg, Dogwatch(cfg, Ledger(":memory:"), n), n
+
+
+def still_event(ts, obj_id="a", zones=("cage",), label="dog", box=None,
+                stationary=True):
+    import json
+    body = {"id": obj_id, "camera": "dogs_main", "label": label, "frame_time": ts,
+            "score": 0.8, "box": box or [80, 380, 300, 520],
+            "current_zones": list(zones), "stationary": stationary,
+            "motionless_count": 9000, "position_changes": 1}
+    return json.dumps({"type": "update", "before": body, "after": body})

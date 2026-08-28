@@ -125,6 +125,9 @@ class DogTracker:
             d.id: DogState(dog_id=d.id, name=d.name) for d in cfg.dogs
         }
         self.cage_dog_away = False
+        # Manual mute via the `quiet` command. Separate from configured quiet
+        # hours: this one is you saying "not now".
+        self.muted_until: float = 0.0
         self.last_person_in_cage: float | None = None
         self.assignments: dict[str, Assignment] = {}
         # Room-level, because Frigate cannot attribute a bark to a dog.
@@ -156,6 +159,17 @@ class DogTracker:
 
     def set_cage_dog_away(self, away: bool) -> None:
         self.cage_dog_away = away
+
+    def mute_for(self, seconds: float, now: float) -> float:
+        """Mute alert delivery. Returns the timestamp muting ends."""
+        self.muted_until = max(self.muted_until, now + seconds)
+        return self.muted_until
+
+    def unmute(self) -> None:
+        self.muted_until = 0.0
+
+    def is_muted(self, now: float) -> bool:
+        return now < self.muted_until
 
     # -- periodic ----------------------------------------------------------
 

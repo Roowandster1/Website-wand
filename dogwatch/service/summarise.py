@@ -131,14 +131,52 @@ def build_digest(ledger: Ledger, cfg: Config, start: float, end: float,
         else:
             lines.append("  not detected on camera long enough to build a timeline")
 
+    # --- care: two sources, never merged ---------------------------------
+    care = ledger.care_between(start, end)
+    visits = ledger.visits_between(start, end)
+
+    if care or visits:
+        lines.append("")
+        lines.append("=== care and routine ===")
+
+    if care:
+        lines.append("  LOGGED BY THE OWNER (reliable — a person typed these):")
+        for c in care:
+            label = {"pee": "bladder expressed", "poo": "bowel movement",
+                     "fed": "fed", "water": "given water",
+                     "meds": "medication given"}.get(c["kind"], c["kind"])
+            note = f" — \"{c['note']}\"" if c["note"] else ""
+            lines.append(f"    {_fmt_clock(c['ts'])} {label}{note}")
+    else:
+        lines.append("  LOGGED BY THE OWNER: nothing recorded in this window.")
+        lines.append("    (This means nothing was typed in, NOT that nothing "
+                     "happened. Do not infer neglect from an empty log.)")
+
+    if visits:
+        lines.append("  SEEN BY THE CAMERA (presence only — this shows a dog was "
+                     "AT a place, never that it drank, ate or toileted):")
+        by_zone: dict[tuple[str, str], list[float]] = {}
+        for v in visits:
+            by_zone.setdefault((v["dog"], v["zone"]), []).append(v["duration"] or 0.0)
+        for (dog, zone), durs in sorted(by_zone.items()):
+            who = names.get(dog, dog)
+            total = sum(durs) / 60.0
+            lines.append(f"    {who} was at `{zone}` {len(durs)} times, "
+                         f"{total:.0f} min in total")
+
     alerts = [a for a in ledger.recent_alerts(start) if a["ts"] <= end]
     if alerts:
         lines.append("")
         lines.append("=== alerts raised in this window ===")
         for a in alerts:
-            quiet = " (overnight, not sent to the owner)" if a["action"].endswith("_quiet") else ""
+            if a["action"].endswith("_quiet"):
+                why = " (overnight — silenced, the owner has NOT seen this yet)"
+            elif a["action"].endswith("_muted"):
+                why = " (alerts were muted — the owner has NOT seen this yet)"
+            else:
+                why = ""
             lines.append(f"  {_fmt_clock(a['ts'])} {a['rule']} / {a['subject']}: "
-                         f"{a['detail']}{quiet}")
+                         f"{a['detail']}{why}")
     return "\n".join(lines)
 
 

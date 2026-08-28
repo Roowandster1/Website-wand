@@ -128,6 +128,50 @@ class SummariserCfg:
 
 
 @dataclass
+class DailySummaryCfg:
+    enabled: bool = False
+    at: str = "08:00"
+    window_hours: float = 12.0
+    # If the service starts long after `at` — say a reboot at 20:00 — sending a
+    # "morning" summary right then is wrong. Outside this window the day is
+    # marked done without sending.
+    grace_minutes: float = 120.0
+
+    def minutes_of_day(self) -> int:
+        try:
+            h, m = self.at.split(":")
+            h, m = int(h), int(m)
+        except (ValueError, AttributeError):
+            raise ConfigError(
+                f"daily_summary.at must be HH:MM, got {self.at!r}") from None
+        if not (0 <= h < 24 and 0 <= m < 60):
+            raise ConfigError(f"daily_summary.at is not a valid time: {self.at!r}")
+        return h * 60 + m
+
+
+@dataclass
+class DashboardCfg:
+    enabled: bool = False
+    host: str = "0.0.0.0"
+    port: int = 8080
+    default_hours: float = 48.0
+
+
+@dataclass
+class CareCfg:
+    # Zone dwell shorter than this is box jitter clipping a zone edge, not a
+    # visit worth recording.
+    min_visit_seconds: float = 20.0
+    # Zones whose visits are worth logging at all. Only zones that actually
+    # exist by default — a default naming a zone the Frigate config does not
+    # define would make every config without a `care:` block fail to load.
+    track_zones: tuple[str, ...] = ("water_food",)
+    # Reported in the summary only, never pushed: a dog that drank off camera
+    # would otherwise raise a false alarm about something frightening.
+    hydration_warn_hours: float = 0.0     # 0 = off
+
+
+@dataclass
 class Config:
     mqtt_host: str
     mqtt_port: int
@@ -149,6 +193,9 @@ class Config:
     minute_retention_days: int
     log_level: str
     log_path: str | None
+    daily_summary: DailySummaryCfg
+    dashboard: DashboardCfg
+    care: CareCfg
 
     # Secrets never come from the YAML — that file is committed.
     telegram_token: str | None = None
@@ -373,6 +420,42 @@ def load(path: str | Path, env: dict[str, str] | None = None) -> Config:
     st = raw.get("storage") or {}
     lg = raw.get("logging") or {}
 
+    dsr = raw.get("daily_summary") or {}
+    daily = DailySummaryCfg(
+        enabled=bool(dsr.get("enabled", False)),
+        at=str(dsr.get("at", "08:00")),
+        window_hours=_num(dsr.get("window_hours", 12), "daily_summary.window_hours",
+                          minimum=0.5),
+        grace_minutes=_num(dsr.get("grace_minutes", 120),
+                           "daily_summary.grace_minutes", minimum=1.0),
+    )
+    daily.minutes_of_day()          # validate the time string now, not at 08:00
+
+    dbr = raw.get("dashboard") or {}
+    dash = DashboardCfg(
+        enabled=bool(dbr.get("enabled", False)),
+        host=str(dbr.get("host", "0.0.0.0")),
+        # 0 is legal and means "let the OS pick a free port" — used by the
+        # tests, and occasionally handy behind a reverse proxy.
+        port=int(_num(dbr.get("port", 8080), "dashboard.port", minimum=0)),
+        default_hours=_num(dbr.get("default_hours", 48), "dashboard.default_hours",
+                           minimum=1.0),
+    )
+
+    cr = raw.get("care") or {}
+    tz = cr.get("track_zones")
+    if tz is None:
+        tz = ["water_food"]
+    if not isinstance(tz, list):
+        raise ConfigError("care.track_zones must be a list of zone names")
+    care = CareCfg(
+        min_visit_seconds=_num(cr.get("min_visit_seconds", 20),
+                               "care.min_visit_seconds", minimum=0.0),
+        track_zones=tuple(str(z) for z in tz),
+        hydration_warn_hours=_num(cr.get("hydration_warn_hours", 0),
+                                  "care.hydration_warn_hours", minimum=0.0),
+    )
+
     cfg = Config(
         mqtt_host=str(mqtt.get("host", "localhost")),
         mqtt_port=int(_num(mqtt.get("port", 1883), "mqtt.port", minimum=1)),
@@ -396,12 +479,21 @@ def load(path: str | Path, env: dict[str, str] | None = None) -> Config:
                                        "storage.minute_retention_days", minimum=1)),
         log_level=str(lg.get("level", "INFO")).upper(),
         log_path=str(lg["path"]) if lg.get("path") else None,
+        daily_summary=daily,
+        dashboard=dash,
+        care=care,
         telegram_token=env.get("TELEGRAM_BOT_TOKEN") or None,
         anthropic_key=env.get("ANTHROPIC_API_KEY") or None,
     )
 
     # Cross-check the exempt zones actually exist, or the exemption is a no-op
     # that silently makes the dog alert while asleep in its own bed.
+    for z in cfg.care.track_zones:
+        if z not in cfg.zones:
+            raise ConfigError(
+                f"care.track_zones names `{z}`, which is not defined under "
+                "`zones` — visits to it could never be recorded"
+            )
     for d in cfg.dogs:
         for z in d.stillness.exempt_zones:
             if z not in cfg.zones:

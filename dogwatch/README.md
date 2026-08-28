@@ -52,11 +52,14 @@ dogwatch/
 │   ├── ledger.py             SQLite: raw events, minute rollup, run compression
 │   ├── rules.py              alert rules and the incident state machine
 │   ├── summarise.py          the /update digest and Claude call
-│   ├── commands.py           Telegram command parsing and responses
+│   ├── commands.py           command parsing, care logging, responses
+│   ├── telegram.py           long-polling, offset persistence, chat allowlist
+│   ├── dashboard.py          local read-only web dashboard (stdlib only)
+│   ├── frigate.py            snapshot client
 │   ├── notify.py             Telegram / shadow / log sinks
 │   ├── source.py             live MQTT and replay, same interface
 │   └── app.py                wiring
-├── tests/                    80 tests, no broker or camera required
+├── tests/                    121 tests, no broker or camera required
 └── tools/
     ├── check_stream.sh       Phase 0 — prove the camera works
     ├── mqtt_watch.py         Phase 2 — characterise the real event stream
@@ -103,11 +106,41 @@ python -m service --config dogwatch.yml run          # live
 ```
 update [6h]   summarise what the dogs have been doing
 status        instant state — no model call, free
-quiet 2h      mute alerts for a while
+quiet 2h      mute alerts for a while (quiet 0 to unmute)
 out / in      the crated dog has left / returned
+
+pee / poo     bladder expression, bowel movement
+fed / water   meals and drinks
+meds          medication given
 ```
 
-`update` works as a bare word, not just `/update`.
+`update` works as a bare word, not just `/update`. Any care word takes an
+optional note: `pee slightly cloudy`. The reply tells you how long since the last
+one of that kind — which for a bladder-expression schedule is the useful part.
+
+**Only the chat ids in `dogwatch.yml` are answered.** A bot token is effectively
+public; without that allowlist a stranger could send `quiet 8h` and silently
+disable the monitor. Unknown chats are ignored with no reply at all.
+
+## The morning summary
+
+Quiet hours deliberately silence overnight alerts, so `daily_summary` is where
+you find out what you missed. It leads with anything that was suppressed. The
+last-sent date is stored in the database, so a restart cannot send it twice, and
+a reboot at 20:00 will not fire a "morning" summary in the evening.
+
+## Dashboard
+
+`http://<geekom>:8080` — activity bands per dog, identity confidence over time,
+bark counts, the care log and alert history, with a table view for everything.
+
+Care events appear as ticks on the activity band. That matters: a crated dog
+that lies still all day is one flat bar, and the ticks are what show the day
+actually had a shape.
+
+> **Read-only, but unauthenticated.** It reveals when the house is empty. Keep it
+> on your LAN and do not port-forward it. The page makes no external requests at
+> all — no CDN, no fonts, no telemetry — so it works with the internet down.
 
 ---
 
@@ -226,7 +259,9 @@ Check the digest before spending anything: `python3 tools/replay.py day.jsonl --
 
 ### Phase 5 — alerts
 
-**Built, shipping in shadow mode.** Stillness, absence, bark bursts and a
+**Built, shipping in shadow mode.** Alerts can also be muted on demand with
+`quiet 2h`; muted and quiet-hour occurrences are still recorded and still reach
+the morning summary, so silencing your phone never silences the record. Stillness, absence, bark bursts and a
 Frigate-silence dead-man's switch, each with an incident state machine
 (`confirm_for` kills flapping, `cooldown` kills repeats).
 

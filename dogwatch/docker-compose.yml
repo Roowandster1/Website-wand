@@ -61,6 +61,10 @@ services:
     depends_on:
       - mosquitto
       - frigate
+    ports:
+      # Dashboard. Read-only but UNAUTHENTICATED — it reveals when the house is
+      # empty. Keep it on the LAN; do not port-forward it.
+      - "8080:8080"
     volumes:
       - ./dogwatch.yml:/config/dogwatch.yml:ro
       - ./storage:/app/storage

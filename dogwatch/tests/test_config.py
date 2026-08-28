@@ -119,3 +119,20 @@ def test_missing_secrets_are_none_not_a_crash():
     cfg = load(write(base()), env={})
     assert cfg.telegram_token is None
     assert cfg.anthropic_key is None
+
+
+def test_a_config_with_no_care_block_still_loads():
+    """The care defaults must not name a zone the Frigate config lacks, or every
+    minimal config fails to load with a confusing error about a zone the user
+    never mentioned."""
+    raw = base()
+    raw.pop("care", None)
+    cfg = load(write(raw), env={})
+    assert all(z in cfg.zones for z in cfg.care.track_zones)
+
+
+def test_care_track_zones_must_exist_when_named_explicitly():
+    raw = base()
+    raw["care"] = {"track_zones": ["nowhere"]}
+    with pytest.raises(ConfigError, match="could never be recorded"):
+        load(write(raw), env={})

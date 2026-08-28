@@ -196,6 +196,18 @@ cameras:
         objects:
           - dog
 
+      # ---- Optional: toilet area -----------------------------------------
+      # Puppy pad / tray. Uncomment here AND add `toilet_area` to
+      # care.track_zones in dogwatch.yml to log visits to it.
+      #
+      # This records PRESENCE only. Neither Frigate nor dogwatch can tell that
+      # a dog actually toileted — only that it was there, and for how long.
+      # toilet_area:
+      #   friendly_name: Toilet area
+      #   coordinates: 0.05,0.30,0.05,0.10,0.30,0.10,0.30,0.30
+      #   objects:
+      #     - dog
+
       doorway:
         friendly_name: Doorway
         coordinates: 0.40,0.34,0.40,0.06,0.62,0.06,0.62,0.34
