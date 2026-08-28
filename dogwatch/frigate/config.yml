@@ -1,0 +1,226 @@
+# Dogwatch — Frigate 0.17.2 configuration
+#
+# Written against the 0.17.2 schema. Two dogs share one room: one paralysed and
+# mainly crated, one with free roam. Identity is resolved downstream by WHERE a
+# dog is (cage zone vs not), because the dogs look alike and no detector will
+# tell them apart.
+#
+# Zone presence in Frigate is evaluated on the BOTTOM CENTRE of the bounding box,
+# not the centroid. That is the behaviour we want for the cage: a dog lying flat
+# still has its bottom-centre on the crate floor.
+
+mqtt:
+  enabled: true
+  host: mosquitto
+  port: 1883
+  topic_prefix: frigate
+  client_id: frigate
+  stats_interval: 60
+
+# ---------------------------------------------------------------------------
+# Detector
+# ---------------------------------------------------------------------------
+# Geekom mini PCs are Intel — OpenVINO on the iGPU. Confirm with `lscpu`.
+# If this box turns out to be AMD, delete this block entirely and Frigate falls
+# back to a CPU detector (then drop detect.fps to 3 and expect higher load).
+detectors:
+  ov:
+    type: openvino
+    device: GPU
+
+model:
+  width: 300
+  height: 300
+  input_tensor: nhwc
+  input_pixel_format: bgr
+  path: /openvino-model/ssdlite_mobilenet_v2.xml
+  labelmap_path: /openvino-model/coco_91cl_bkgr.txt
+
+ffmpeg:
+  hwaccel_args: preset-vaapi
+
+# ---------------------------------------------------------------------------
+# go2rtc — turn the USB webcam into an RTSP stream
+# ---------------------------------------------------------------------------
+# `video=0` maps to /dev/video0. Confirm the device with `v4l2-ctl --list-devices`
+# and the supported resolutions with:
+#     ffmpeg -f v4l2 -list_formats all -i /dev/video0
+# Set video_size to something the camera actually reports. 1024x576 is a safe start.
+#
+# AUDIO: the line below is video-only. Most USB webcam mics appear as a SEPARATE
+# ALSA device, not part of the v4l2 device, so audio needs its own input. Get the
+# card/device with `arecord -l`, then swap in the commented line below and adjust
+# hw:1,0. Verify with tools/check_stream.sh before trusting it — if audio does not
+# come through, bark detection cannot work and that is a Phase 1 finding, not a
+# Phase 5 surprise.
+go2rtc:
+  streams:
+    dogs_main:
+      - "ffmpeg:device?video=0&video_size=1024x576#video=h264"
+      # With audio (adjust hw:1,0 to match `arecord -l`):
+      # - "ffmpeg:device?video=0&video_size=1024x576&audio=hw:1,0#video=h264#audio=aac"
+
+# ---------------------------------------------------------------------------
+# Global defaults
+# ---------------------------------------------------------------------------
+detect:
+  enabled: true
+  fps: 5
+  # Frigate marks an object "stationary" after `threshold` motionless frames and
+  # then only re-runs detection every `interval` frames. At 5fps the defaults
+  # (50/50) mean 10 seconds to go stationary and a re-check every 10 seconds.
+  #
+  # This matters a lot here: a still dog stops generating MQTT updates. We keep
+  # the interval fairly tight so the ledger keeps getting confirmation the dog is
+  # still there, at a small cost in inference.
+  stationary:
+    threshold: 50
+    interval: 25
+
+objects:
+  track:
+    - dog
+    - person
+  filters:
+    dog:
+      # Deliberately permissive. A paralysed dog lying flat behind crate bars is
+      # close to a worst case for a COCO-trained detector, and a missed dog is far
+      # worse for us than an occasional false one. Tune UP in Phase 1 only after
+      # seeing real scores in the Frigate UI.
+      min_score: 0.45
+      threshold: 0.60
+      min_area: 1000
+    person:
+      min_score: 0.55
+      threshold: 0.70
+
+# ---------------------------------------------------------------------------
+# Audio — bark detection (YAMNet, CPU)
+# ---------------------------------------------------------------------------
+# Only works if the stream above actually carries audio.
+#
+# Honest limitation: audio detection is ROOM-LEVEL. Frigate cannot attribute a
+# bark to a particular dog. Barks are logged against the room, never against a
+# named dog.
+#
+# min_volume is an RMS threshold. The default of 500 is a guess for any given mic.
+# Tune it from the Frigate UI: Settings -> Debug -> Audio tab shows live RMS.
+# Set it just above your room's quiet baseline or you will detect the television.
+audio:
+  enabled: true
+  max_not_heard: 30
+  min_volume: 500
+  listen:
+    - bark
+    - yip
+    - howl
+    - whimper_dog
+    - growling
+
+record:
+  enabled: true
+  retain:
+    days: 3
+    mode: motion
+  alerts:
+    retain:
+      days: 14
+    pre_capture: 10
+    post_capture: 10
+  detections:
+    retain:
+      days: 14
+    pre_capture: 10
+    post_capture: 10
+
+snapshots:
+  enabled: true
+  timestamp: true
+  bounding_box: true
+  retain:
+    default: 14
+  # The summariser pulls these as the still frames it sends to Claude.
+  quality: 80
+
+# ---------------------------------------------------------------------------
+# Camera
+# ---------------------------------------------------------------------------
+cameras:
+  dogs_main:
+    enabled: true
+    ffmpeg:
+      inputs:
+        - path: rtsp://127.0.0.1:8554/dogs_main
+          input_args: preset-rtsp-restream
+          roles:
+            - detect
+            - record
+            - audio
+    detect:
+      # PHASE 0: set this to false. Get a working video feed first and confirm it
+      # in the UI. Only flip it to true when you start Phase 1.
+      enabled: true
+      width: 1024
+      height: 576
+
+    motion:
+      # Raised slightly from default — a crate blanket shifting in a draught is
+      # not motion we care about.
+      threshold: 30
+      contour_area: 15
+
+    zones:
+      # ---- The identity anchor -------------------------------------------
+      # Draw this TIGHTLY around the crate interior. Everything downstream
+      # depends on it: a dog whose bottom-centre is in here is the paralysed dog.
+      # Draw it in the UI (Settings -> Debug -> Zones) and paste the coordinates.
+      cage:
+        friendly_name: Crate
+        coordinates: 0.05,0.95,0.05,0.35,0.45,0.35,0.45,0.95
+        objects:
+          - dog
+          - person   # a person in the crate zone = you repositioning him
+
+      # ---- The roaming dog's bed ------------------------------------------
+      # Stillness here is normal and is exempted from stillness alerting.
+      bed_roam:
+        friendly_name: Roaming dog bed
+        coordinates: 0.55,0.95,0.55,0.55,0.95,0.55,0.95,0.95
+        objects:
+          - dog
+
+      # ---- Journal colour --------------------------------------------------
+      water_food:
+        friendly_name: Water and food
+        coordinates: 0.78,0.52,0.78,0.34,0.97,0.34,0.97,0.52
+        objects:
+          - dog
+
+      # ---- Optional: toilet area -----------------------------------------
+      # Puppy pad / tray. Uncomment here AND add `toilet_area` to
+      # care.track_zones in dogwatch.yml to log visits to it.
+      #
+      # This records PRESENCE only. Neither Frigate nor dogwatch can tell that
+      # a dog actually toileted — only that it was there, and for how long.
+      # toilet_area:
+      #   friendly_name: Toilet area
+      #   coordinates: 0.05,0.30,0.05,0.10,0.30,0.10,0.30,0.30
+      #   objects:
+      #     - dog
+
+      doorway:
+        friendly_name: Doorway
+        coordinates: 0.40,0.34,0.40,0.06,0.62,0.06,0.62,0.34
+        objects:
+          - dog
+          - person
+
+    review:
+      alerts:
+        # We do our own alerting in the dogwatch service. Frigate's review alerts
+        # are only used to mark clips worth keeping for 14 days.
+        labels:
+          - dog
+          - person
+
+version: 0.17-0

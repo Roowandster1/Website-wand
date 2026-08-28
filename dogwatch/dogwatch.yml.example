@@ -1,0 +1,223 @@
+# Dogwatch service configuration — shape settled in Phase 2, service built in Phase 3.
+#
+# Copy to dogwatch.yml. Secrets do NOT live here (this file is committed):
+# the Telegram token and Anthropic key come from .env.
+
+mqtt:
+  host: mosquitto
+  port: 1883
+  topic_prefix: frigate
+  client_id: dogwatch
+
+frigate:
+  # Used to pull snapshots for notifications and for the /update summariser.
+  base_url: http://frigate:5000
+  camera: dogs_main
+  # Must match cameras.dogs_main.detect in frigate/config.yml. Bounding boxes
+  # arrive in these pixel units and are normalised to 0..1 on ingest, so a
+  # camera swap does not silently invalidate every threshold below.
+  detect_width: 1024
+  detect_height: 576
+
+# ---------------------------------------------------------------------------
+# The dogs
+# ---------------------------------------------------------------------------
+# Identity is resolved by location, not appearance. Frigate cannot tell two
+# similar dogs apart; the crate can.
+dogs:
+  - id: cage_dog
+    name: "" # <- put the paralysed dog's name here
+    paralysed: true
+    identity:
+      rule: in_zone
+      zone: cage
+    # Stillness in the crate is normal and expected. This threshold is a
+    # REPOSITIONING CUE (pressure sores), not an emergency alarm.
+    stillness:
+      enabled: true
+      # Movement below this (as a fraction of frame width) does not count.
+      # Set from real data in Phase 3, not from this placeholder.
+      min_movement: 0.02
+      # How long without movement before it is worth telling you.
+      after_minutes: 240
+      # A person entering the cage zone resets this timer — that is you turning
+      # him, and it should not then alert 10 minutes later.
+      reset_on_person: true
+
+  - id: roam_dog
+    name: "" # <- put the roaming dog's name here
+    paralysed: false
+    identity:
+      rule: not_in_zone
+      zone: cage
+    stillness:
+      enabled: true
+      min_movement: 0.02
+      after_minutes: 180
+      reset_on_person: true
+      # Sleeping in his own bed is not an incident.
+      exempt_zones:
+        - bed_roam
+
+# ---------------------------------------------------------------------------
+# Zone semantics — maps Frigate zone names to meaning for the journal
+# ---------------------------------------------------------------------------
+zones:
+  cage:       { meaning: rest,  identity_anchor: true }
+  bed_roam:   { meaning: rest }
+  water_food: { meaning: drink_eat }
+  doorway:    { meaning: transit }
+
+# ---------------------------------------------------------------------------
+# Track and state handling
+# ---------------------------------------------------------------------------
+tracking:
+  # A Frigate track counts as "present" this long after its last update.
+  # A stationary dog updates only every detect.stationary.interval frames, so
+  # this MUST be larger than the p95 gap that tools/mqtt_watch.py reports.
+  # Too small and a dog plainly lying there is scored as absent.
+  live_window_seconds: 180
+
+  # Frigate stops publishing updates for stationary objects. Poll the HTTP API
+  # as a backstop so the ledger keeps ticking while nothing is moving.
+  poll_interval_seconds: 30
+
+  # Drop tracks we have not heard from in this long (Frigate does occasionally
+  # miss an `end` event).
+  reap_after_seconds: 600
+
+# ---------------------------------------------------------------------------
+# Alert rules — all ship in shadow mode first (Phase 5)
+# ---------------------------------------------------------------------------
+alerts:
+  # true  = log what WOULD have been sent, send nothing
+  # false = actually send to Telegram
+  # Run a full day in shadow mode and read the log before flipping this.
+  shadow_mode: true
+
+  # Overnight suppression. A stillness alert is a repositioning cue, not an
+  # emergency; one that fires at 4am gets the whole system muted, after which it
+  # protects nothing. Suppressed occurrences are still recorded, so the morning
+  # /update can tell you he did not shift all night.
+  #
+  # Anything NOT listed under `suppress` still wakes you — deliberately, absence
+  # of the crated dog and a dead monitor are never silenced.
+  quiet_hours:
+    enabled: true
+    start: "22:30"
+    end: "07:00"
+    suppress:
+      - stillness
+      - bark_burst
+
+  defaults:
+    # Condition must hold this long before notifying — kills flapping.
+    confirm_for_seconds: 120
+    # No repeat notification for this long after one fires.
+    cooldown_seconds: 3600
+    # Send a single "resolved" message when the incident clears.
+    notify_on_resolve: true
+
+  rules:
+    stillness:
+      enabled: true      # per-dog thresholds are under `dogs` above
+
+    absence:
+      # The crated dog vanishing from a fixed camera is more alarming than him
+      # not moving. Nothing should make him leave the frame on his own.
+      enabled: true
+      dogs: [cage_dog]
+      after_minutes: 20
+      cooldown_seconds: 1800
+
+    bark_burst:
+      # Room-level only. Frigate cannot attribute a bark to a dog, so this
+      # alert never names one.
+      enabled: true
+      count: 6
+      within_minutes: 5
+      cooldown_seconds: 2700
+
+    frigate_silent:
+      # Dead-man's switch. A monitoring system that dies quietly is worse than
+      # none, because you will trust it.
+      enabled: true
+      after_minutes: 10
+
+# ---------------------------------------------------------------------------
+# The /update summariser
+# ---------------------------------------------------------------------------
+summariser:
+  default_window_hours: 6
+  max_window_hours: 24
+  # Still frames sampled across the window and sent with the timeline.
+  # This summarises stills + structured data, NOT video.
+  max_images: 8
+  image_max_width: 600
+  model: claude-opus-5
+  effort: low            # summarisation does not need deep reasoning
+  max_tokens: 2000
+  # The prompt is told when identity was inferred rather than certain, and is
+  # instructed not to offer veterinary opinion.
+  hedge_on_ambiguous_identity: true
+
+# ---------------------------------------------------------------------------
+# Daily morning summary
+# ---------------------------------------------------------------------------
+# The complement to quiet hours: overnight alerts are deliberately silenced, so
+# this is where you find out what you missed. It leads with anything that was
+# suppressed overnight.
+daily_summary:
+  enabled: true
+  at: "08:00"
+  window_hours: 12
+  # If the box reboots at 20:00 and today's summary never went out, sending a
+  # "morning" summary then would be nonsense. Outside this window past `at`, the
+  # day is marked done without sending.
+  grace_minutes: 120
+
+# ---------------------------------------------------------------------------
+# Local dashboard
+# ---------------------------------------------------------------------------
+# Read-only activity timeline on your LAN. NO AUTHENTICATION — it reveals when
+# the house is empty, so do not port-forward it.
+dashboard:
+  enabled: true
+  host: "0.0.0.0"
+  port: 8080
+  default_hours: 48
+
+# ---------------------------------------------------------------------------
+# Care tracking
+# ---------------------------------------------------------------------------
+# The camera records zone PRESENCE and duration. It cannot tell that a dog
+# drank, urinated or ate — only that it was there. Anything that matters
+# clinically (bladder expression, meds, meals) is logged by you via Telegram:
+#   fed / water / pee / poo / meds  [optional note]
+# The summary keeps the two sources clearly apart and never merges them.
+care:
+  min_visit_seconds: 20
+  track_zones:
+    - water_food
+    # - toilet_area      # add the zone to frigate/config.yml first
+  # Reported in the summary only, never pushed as an alert — a dog that drank
+  # off camera would otherwise raise a false alarm about something frightening.
+  # 0 disables it.
+  hydration_warn_hours: 0
+
+telegram:
+  # Token comes from TELEGRAM_BOT_TOKEN in .env.
+  chat_ids:
+    - 0   # <- replace with your chat id
+  # Attach the Frigate snapshot to alerts.
+  send_snapshots: true
+
+storage:
+  db_path: ./storage/dogwatch.db
+  # Raw event rows are chatty; the minute rollup is what /update reads.
+  raw_event_retention_days: 30
+  minute_retention_days: 365
+
+logging:
+  level: INFO
+  path: ./storage/dogwatch.log
