@@ -1,0 +1,18 @@
+# Secrets
+.env
+
+# Runtime state — never commit recordings, databases or broker state
+storage/
+frigate/media/
+mosquitto/data/
+mosquitto/log/
+*.db
+*.db-wal
+*.db-shm
+*.jsonl
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/

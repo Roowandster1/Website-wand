@@ -1,0 +1,54 @@
+# Dogwatch — Frigate + MQTT broker.
+#
+# Frigate is pinned to 0.17.2 (current stable, released 2026-06-28). The config
+# in frigate/config.yml is written against THIS version's schema. If you bump the
+# tag, re-read that version's release notes first — Frigate changes config keys
+# between minor versions.
+#
+# Phases 0-2 need only these two services. The `dogwatch` service is added in
+# Phase 3, once the MQTT observer has told us what the real data looks like.
+
+services:
+  mosquitto:
+    image: eclipse-mosquitto:2.0
+    container_name: dogwatch-mosquitto
+    restart: unless-stopped
+    ports:
+      - "1883:1883"
+    volumes:
+      - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - ./mosquitto/data:/mosquitto/data
+      - ./mosquitto/log:/mosquitto/log
+
+  frigate:
+    image: ghcr.io/blakeblackshear/frigate:0.17.2
+    container_name: dogwatch-frigate
+    restart: unless-stopped
+    depends_on:
+      - mosquitto
+    privileged: true
+    shm_size: "256mb"      # raise if Frigate logs "unable to allocate shared memory"
+    devices:
+      # USB webcam. Confirm the real path with `v4l2-ctl --list-devices`.
+      - /dev/video0:/dev/video0
+      # Intel iGPU for OpenVINO detection + hardware decode. Remove on a Pi/AMD box.
+      - /dev/dri/renderD128:/dev/dri/renderD128
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./frigate/config.yml:/config/config.yml
+      - ${FRIGATE_MEDIA:-./frigate/media}:/media/frigate
+      # Frigate keeps its own SQLite db + model cache in /config
+      - ./frigate/data:/config/data
+      # 1GB of RAM for the recording cache saves a lot of disk wear
+      - type: tmpfs
+        target: /tmp/cache
+        tmpfs:
+          size: 1000000000
+    ports:
+      - "8971:8971"   # authenticated web UI
+      - "5000:5000"   # internal/unauthenticated API — bind to localhost in production
+      - "8554:8554"   # go2rtc RTSP restream
+      - "8555:8555/tcp"
+      - "8555:8555/udp"
+    environment:
+      TZ: ${TZ:-Europe/London}
