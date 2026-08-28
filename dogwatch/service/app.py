@@ -54,6 +54,7 @@ class Dogwatch:
         # Telegram command polling, wired in run_live().
         self.poller = None
         self.dashboard = None
+        self._restored = False
 
     @staticmethod
     def _default_notifier(cfg: Config) -> Notifier:
@@ -66,9 +67,17 @@ class Dogwatch:
 
     # -- ingest ------------------------------------------------------------
 
+    # We publish this ourselves on connect to ask Frigate to republish state,
+    # and our own `frigate/#` subscription then delivers it back to us.
+    _OWN_TOPICS = ("onConnect",)
+
     def handle(self, topic: str, payload: str, ts: float) -> None:
         prefix = self.cfg.topic_prefix
-        self.rules.note_frigate_alive(ts)
+        # Liveness must come from Frigate, never from a message we sent
+        # ourselves — otherwise the dead-man's switch can be fed by its own
+        # watchdog.
+        if not topic.endswith(self._OWN_TOPICS):
+            self.rules.note_frigate_alive(ts)
 
         if topic == f"{prefix}/events":
             try:
@@ -101,6 +110,9 @@ class Dogwatch:
     # -- periodic ----------------------------------------------------------
 
     def tick(self, now: float) -> list:
+        if not self._restored:
+            self.restore_state(now)
+            self._restored = True
         self.tracker.tick(now)
 
         minute = minute_of(now)
@@ -131,8 +143,91 @@ class Dogwatch:
             self.alerts_emitted.append(ev)
 
         self._maybe_daily_summary(now)
+        self._maybe_prune(now)
         self._last_tick = now
         return events
+
+    # -- state that must survive a restart ---------------------------------
+    #
+    # The stillness timer lives on DogState, which survives Frigate dropping and
+    # re-acquiring a track. It did NOT survive the process restarting: every
+    # anchor reset to zero on boot, so a container restart silently pushed the
+    # 4-hour stillness alert 4 hours further away — or removed it entirely on a
+    # box that restarts often. Same failure mode the DogState layer exists to
+    # prevent, one level up.
+
+    STATE_KEY = "dog_state_snapshot"
+
+    def _persist_state(self, now: float) -> None:
+        snap = {"saved_at": now, "dogs": {}}
+        for dog_id, st in self.tracker.dogs.items():
+            snap["dogs"][dog_id] = {
+                "anchor_pos": list(st.anchor_pos) if st.anchor_pos else None,
+                "anchor_ts": st.anchor_ts,
+                "last_pos": list(st.last_pos) if st.last_pos else None,
+                "last_seen": st.last_seen,
+                "state": st.state.value,
+                "state_since": st.state_since,
+            }
+        self.ledger.set_meta(self.STATE_KEY, json.dumps(snap))
+
+    def restore_state(self, now: float) -> bool:
+        """Reload the stillness anchors, but only if we were down briefly.
+
+        The window is the same `live_window_seconds` used for a lost track, and
+        for the same reason: past it we genuinely could not see the dogs, so
+        resuming the timer would claim a stillness nobody observed.
+        """
+        raw = self.ledger.get_meta(self.STATE_KEY)
+        if not raw:
+            return False
+        try:
+            snap = json.loads(raw)
+        except (json.JSONDecodeError, TypeError):
+            return False
+
+        gap = now - float(snap.get("saved_at") or 0)
+        window = self.cfg.tracking.live_window_seconds
+        if gap < 0 or gap > window:
+            log.info("not resuming dog state: %.0fs since the last snapshot "
+                     "(limit %.0fs) — re-anchoring instead", gap, window)
+            return False
+
+        from .models import ActivityState
+
+        for dog_id, d in (snap.get("dogs") or {}).items():
+            st = self.tracker.dogs.get(dog_id)
+            if st is None:
+                continue
+            st.anchor_pos = tuple(d["anchor_pos"]) if d.get("anchor_pos") else None
+            st.anchor_ts = float(d.get("anchor_ts") or 0.0)
+            st.last_pos = tuple(d["last_pos"]) if d.get("last_pos") else None
+            st.last_seen = d.get("last_seen")
+            st.state_since = float(d.get("state_since") or 0.0)
+            try:
+                st.state = ActivityState(d.get("state", "out_of_view"))
+            except ValueError:
+                pass
+        log.info("resumed dog state after a %.0fs gap", gap)
+        return True
+
+    # -- retention ---------------------------------------------------------
+
+    def _maybe_prune(self, now: float) -> bool:
+        """Apply the configured retention, once a day.
+
+        Without this the raw `events` table grows without bound and
+        `raw_event_retention_days` is a setting that does nothing.
+        """
+        today = datetime.fromtimestamp(now).strftime("%Y-%m-%d")
+        if self.ledger.get_meta("last_prune") == today:
+            return False
+        self.ledger.set_meta("last_prune", today)
+        ev, mi = self.ledger.prune(now, self.cfg.raw_event_retention_days,
+                                  self.cfg.minute_retention_days)
+        if ev or mi:
+            log.info("pruned %d events and %d minute rows past retention", ev, mi)
+        return True
 
     # -- alert delivery ----------------------------------------------------
 
@@ -268,6 +363,7 @@ class Dogwatch:
         self.tracker.reset_minute_counters()
         self._person_this_minute = False
         self._barks_this_minute = 0
+        self._persist_state(minute_ts + 60)
         self.ledger.commit()
 
     def close(self) -> None:
@@ -333,19 +429,34 @@ class Dogwatch:
                                    msg.chat_id)
         return n
 
-    def run_live(self) -> None:
+    def run_live(self, source=None, clock=None, start_services: bool = True) -> None:
+        """The live loop.
+
+        `source` and `clock` are injectable so the loop itself can be tested
+        without a broker — this is the code path that runs unattended for
+        months, and it was previously the only untested one in the project.
+        """
         import time
 
-        from .source import mqtt_stream
+        clock = clock or time.time
+        if start_services:
+            self.start_services()
+        if source is None:
+            from .source import mqtt_stream
 
-        self.start_services()
+            source = mqtt_stream(self.cfg.mqtt_host, self.cfg.mqtt_port,
+                                 f"{self.cfg.topic_prefix}/#", self.cfg.client_id)
+
         interval = self.cfg.tracking.poll_interval_seconds
-        next_tick = time.time()
-        for msg in mqtt_stream(self.cfg.mqtt_host, self.cfg.mqtt_port,
-                               f"{self.cfg.topic_prefix}/#", self.cfg.client_id):
+        next_tick = clock()
+        for msg in source:
             if msg.topic != "__tick__":
-                self.handle(msg.topic, msg.payload, msg.ts)
-            now = time.time()
+                try:
+                    self.handle(msg.topic, msg.payload, msg.ts)
+                except Exception as exc:
+                    # One malformed message must never end the monitoring run.
+                    log.error("failed to handle %s: %s", msg.topic, exc)
+            now = clock()
             # Commands are drained every loop, not every tick, so a reply feels
             # immediate rather than up to poll_interval late.
             self.drain_commands(now)
